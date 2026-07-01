@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>情報Ⅰ デジタルデータ学習ポータル</title>
+    
+    <!-- =================================================================
+      【管理・編集者の方へ】
+      「体験ツール」や「演習問題」のリンク先URL（飛び先）を変更したい場合は、
+      この下にある【URL設定エリア】のクォーテーション（' '）の中身を書き換えてください。
+      
+      ★未完成のコンテンツや、リンクを設定したくない項目は、
+        URLを空（ '' ）にするか、 '#' にしてください。
+        自動的にボタンがグレースケール（無効化状態）になります。
+    ================================================================== -->
+    <script>
+        const LINK_SETTINGS = {
+            // 1. 文字のデジタル化
+            character: {
+                tool: 'https://example.com/tool/character', // 有効なURLの例
+                quiz: 'https://example.com/quiz/character'
+            },
+            // 2. 音声のデジタル化
+            audio: {
+                tool: '', // 空にすると自動的にグレースケール（無効化）になります
+                quiz: ''
+            },
+            // 3. 色のデジタル化
+            color: {
+                tool: 'https://example.com/tool/color',
+                quiz: '' // 片方だけ無効化することも可能です
+            },
+            // 4. 画像のデジタル化
+            image: {
+                tool: '',
+                quiz: ''
+            },
+            // 5. 動画のデジタル化
+            video: {
+                tool: '',
+                quiz: ''
+            },
+            // 6. デジタルデータの圧縮
+            compression: {
+                tool: '',
+                quiz: ''
+            }
+        };
+
+        // ページ読み込み時に自動でURLを割り当て、空ならグレースケール化するスクリプト
+        window.addEventListener('DOMContentLoaded', () => {
+            Object.keys(LINK_SETTINGS).forEach(id => {
+                const buttons = [
+                    { element: document.getElementById(`${id}-tool`), url: LINK_SETTINGS[id].tool },
+                    { element: document.getElementById(`${id}-quiz`), url: LINK_SETTINGS[id].quiz }
+                ];
+
+                buttons.forEach(btn => {
+                    if (btn.element) {
+                        // URLが空、または'#'の場合は無効化スタイルを適用
+                        if (!btn.url || btn.url === '#') {
+                            btn.element.href = 'javascript:void(0);'; // クリックしても何も起きないように
+                            btn.element.classList.add('btn-disabled');
+                        } else {
+                            btn.element.href = btn.url;
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            color: #2c3e50;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            font-size: 10pt;
+        }
+        
+        /* 💡 画面中央にきゅっと収めるためのメインコンテナ（Webブラウザ最適化） */
+        .main-container {
+            max-width: 1000px;      /* 画面が大きくても横幅1000pxでロック */
+            margin: 30px auto;      /* 上下に余白を作り、左右は中央揃えに */
+            padding: 0 20px;        /* スマホで見たときに画面端にピタッとくっつかないように */
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #ffffff;
+            padding: 25px 30px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .header h1 {
+            font-size: 20pt;
+            margin: 0 0 8px 0;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .header p {
+            font-size: 11pt;
+            margin: 0;
+            opacity: 0.9;
+        }
+        .intro-box {
+            background-color: #ffffff;
+            border-left: 5px solid #2a5298;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .intro-box p {
+            margin: 0;
+            font-size: 10.5pt;
+            color: #4a5568;
+        }
+        .section-title {
+            font-size: 13pt;
+            color: #1e3c72;
+            margin: 30px 0 15px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e2e8f0;
+            font-weight: bold;
+        }
+        
+        /* カードを綺麗に2列にするテーブルレイアウト */
+        .grid-container {
+            display: block;
+        }
+        .card-row {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+            margin-bottom: 15px;
+        }
+        .card-cell {
+            display: table-cell;
+            width: 50%;
+            padding: 0 8px;
+            vertical-align: top;
+        }
+        .card-cell:first-child { padding-left: 0; }
+        .card-cell:last-child { padding-right: 0; }
+        
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.02);
+            height: 100%;
+        }
+        .card-tag {
+            display: inline-block;
+            font-size: 7.5pt;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .tag-info { background-color: #ebf8ff; color: #2b6cb0; }
+        .tag-media { background-color: #faf5ff; color: #6b46c1; }
+        .tag-tech { background-color: #f0fff4; color: #2f855a; }
+
+        .card h2 {
+            font-size: 11.5pt;
+            margin: 0 0 8px 0;
+            color: #1a202c;
+            font-weight: bold;
+        }
+        .card p {
+            font-size: 9pt;
+            color: #718096;
+            margin: 0 0 15px 0;
+            min-height: 27pt;
+        }
+        .btn-container {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+        .btn-cell {
+            display: table-cell;
+            width: 50%;
+            padding: 0 4px;
+        }
+        .btn-cell:first-child { padding-left: 0; }
+        .btn-cell:last-child { padding-right: 0; }
+        
+        .btn {
+            display: block;
+            text-align: center;
+            padding: 8px 4px;
+            font-size: 9pt;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .btn-tool {
+            background-color: #e6fffa;
+            color: #00a3c4;
+            border: 1px solid #b2f5ea;
+        }
+        .btn-quiz {
+            background-color: #fffaf0;
+            color: #dd6b20;
+            border: 1px solid #feebc8;
+        }
+        
+        /* 💡 リンクがない（無効化された）ボタンのグレースケールスタイル */
+        .btn.btn-disabled {
+            background-color: #edf2f7 !important;
+            color: #a0aec0 !important;
+            border: 1px solid #e2e8f0 !important;
+            cursor: not-allowed;
+            pointer-events: none; /* クリック不可に */
+            opacity: 0.6;
+        }
+
+        .spacer {
+            height: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 💡 全体を包むコンテナの中でレイアウトを展開 -->
+    <div class="main-container">
+
+        <div class="header">
+            <h1>情報Ⅰ デジタルデータ学習ポータル</h1>
+            <p>〜見て、触って、解いて学ぶ！デジタル化の仕組み〜</p>
+        </div>
+
+        <div class="intro-box">
+            <p>このサイトは、高校「情報Ⅰ」で学ぶデジタルデータの仕組みについて、実際に動かせる<strong>体験ツール</strong>と、理解度を確かめる<strong>演習問題</strong>の2つのアプローチで楽しくマスターできる学習コンテンツ共有サイトです。</p>
+        </div>
+
+        <div class="section-title">コンテンツ一覧</div>
+
+        <div class="grid-container">
+            <!-- Row 1 -->
+            <div class="card-row">
+                <div class="card-cell">
+                    <div class="card">
+                        <span class="card-tag tag-info">基礎・文字</span>
+                        <h2>文字のデジタル化</h2>
+                        <p>文字コード（ASCII、Shift-JIS、Unicode）の仕組みや、コンピュータが文字を2進数として識別する基礎を学びます。</p>
+                        <div class="btn-container">
+                            <div class="btn-cell"><a href="#" id="character-tool" class="btn btn-tool">💻 体験ツール</a></div>
+                            <div class="btn-cell"><a href="#" id="character-quiz" class="btn btn-quiz">📝 演習問題</a></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-cell">
+                    <div class="card">
+                        <span class="card-tag tag-media">音・波形</span>
+                        <h2>音声のデジタル化</h2>
+                        <p>アナログな音の波を「標本化（サンプリング）」「量子化」「符号化」の3ステップでデジタル変換する原理を視覚的に体験します。</p>
+                        <div class="btn-container">
+                            <div class="btn-cell"><a href="#" id="audio-tool" class="btn btn-tool">💻 体験ツール</a></div>
+                            <div class="btn-cell"><a href="#" id="audio-quiz" class="btn btn-quiz">📝 演習問題</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="card-row">
+                <div class="card-cell">
+                    <div class="card">
+                        <span class="card-tag tag-media">光・色彩</span>
+                        <h2>色のデジタル化</h2>
+                        <p>光の三原色（RGB）の組み合わせや、階調（ビット数）の変化によって表現できる色数がどのように変わるかをシミュレートします。</p>
+                        <div class="btn-container">
+                            <div class="btn-cell"><a href="#" id="color-tool" class="btn btn-tool">💻 体験ツール</a></div>
+                            <div class="btn-cell"><a href="#" id="color-quiz" class="btn btn-quiz">📝 演習問題</a></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-cell">
+                    <div class="card">
+                        <span class="card-tag tag-media">画像・画素</span>
+                        <h2>画像のデジタル化</h2>
+                        <p>ピクセル（画素）と解像度の関係、ラスタ形式とベクタ形式の違いを学び、画像の細かさがデータ量に与える影響を理解します。</p>
+                        <div class="btn-container">
+                            <div class="btn-cell"><a href="#" id="image-tool" class="btn btn-tool">💻 体験ツール</a></div>
+                            <div class="btn-cell"><a href="#" id="image-quiz" class="btn btn-quiz">📝 演習問題</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 3 -->
+            <div class="card-row">
+                <div class="card-cell">
+                    <div class="card">
+                        <span class="card-tag tag-media">映像・フレーム</span>
+                        <h2>動画のデジタル化</h2>
+                        <p>静止画の連続である動画の仕組み（フレームレート：fps）や、解像度・時間・データ量の関係性をインタラクティブに計算します。</p>
+                        <div class="btn-container">
+                            <div class="btn-cell"><a href="#" id="video-tool" class="btn btn-tool">💻 体験ツール</a></div>
+                            <div class="btn-cell"><a href="#" id="video-quiz" class="btn btn-quiz">📝 演習問題</a></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-cell">
+                    <div class="card">
+                        <span class="card-tag tag-tech">最適化・データ量</span>
+                        <h2>デジタルデータの圧縮</h2>
+                        <p>可逆圧縮（ランレングス・ハフマン符号）と非可逆圧縮の違いや、限られた通信環境で効率よくデータを扱う工夫を学びます。</p>
+                        <div class="btn-container">
+                            <div class="btn-cell"><a href="#" id="compression-tool" class="btn btn-tool">💻 体験ツール</a></div>
+                            <div class="btn-cell"><a href="#" id="compression-quiz" class="btn btn-quiz">📝 演習問題</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="spacer"></div>
+    </div>
+
+</body>
+</html>
