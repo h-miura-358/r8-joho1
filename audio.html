@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>音声の標本化体験</title>
+  <style>
+    body {
+      font-family: "Yu Gothic", sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 1100px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    .panel {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    input[type="range"] {
+      width: 100%;
+    }
+    button {
+      padding: 10px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #4a90e2;
+      color: white;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    canvas {
+      width: 100%;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .info-box {
+      background: #eef5ff;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 15px;
+    }
+    .question {
+      background: #fff4e8;
+      border-left: 5px solid #ff9800;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+    .binary {
+      font-family: monospace;
+      word-break: break-all;
+    }
+    #recordButton.recording {
+      background: #e53935;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    #playRecordedButton:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>音声の標本化（サンプリング）体験</h1>
+    <div class="panel" style="background:#fffde7; border-left:6px solid #f9a825;">
+      <h2 style="color:#f57f17; margin-top:0;">🎯 このコンテンツで学ぶこと</h2>
+      <p style="margin:0 0 10px;">音声のデジタル化は、<strong>標本化（サンプリング）・量子化・符号化</strong>の3つのステップで行われます。</p>
+      <p style="margin:0 0 10px;">このコンテンツでは、スライダーや録音を通じて実際に操作しながら、次のことを体験的に学びます。</p>
+      <ul style="margin:0; padding-left:20px;">
+        <li><strong>標本化周波数</strong>を変えると、どのように音質や波形が変化するか</li>
+        <li><strong>量子化ビット数</strong>を変えると、音の細かさはどう変わるか</li>
+        <li>デジタル化による<strong>音質の劣化</strong>を耳で聴き比べる</li>
+        <li>デジタルデータの量は、設定によってどう変わるか</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>① 音を作って聴き比べよう</h2>
+      <div class="controls">
+        <div>
+          <label>
+            音の高さ（周波数）: <span id="freqValue">440</span> Hz
+          </label>
+          <input type="range" id="frequency" min="100" max="2000" value="440">
+        </div>
+        <div>
+          <label>
+            標本化周波数: <span id="sampleValue">8000</span> Hz
+          </label>
+          <input type="range" id="sampleRate" min="2000" max="48000" step="100" value="8000">
+        </div>
+        <div>
+          <label>
+            量子化ビット数: <span id="bitValue">8</span> bit
+          </label>
+          <input type="range" id="bitDepth" min="1" max="16" value="8">
+        </div>
+      </div>
+      <canvas id="waveCanvas" width="1000" height="320" style="margin-top:16px;"></canvas>
+      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button id="playAnalogButton" style="background:#757575;">🔊 元の音を再生（アナログ相当）</button>
+        <button id="playDigitalButton" style="background:#1565c0;">🔊 デジタル化後の音を再生</button>
+        <button id="stopCompareButton" style="background:#c62828;">■ 停止</button>
+      </div>
+      <div class="info-box" style="margin-top:15px;">
+        <p id="dataInfo"></p>
+      </div>
+      <div style="background:#e8f5e9; padding:15px; border-radius:10px; margin-top:10px;">
+        <strong>試してみよう！</strong>
+        <ul>
+          <li>標本化周波数を下げると波形と音はどう変わる？</li>
+          <li>量子化ビット数を減らすと波形と音はどう変わる？</li>
+          <li>高い音ほど、どんな変化が起きる？</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>② デジタル化の流れ</h2>
+      <p style="margin:0 0 10px;">アナログ音声がデジタルデータになるまでの3つのステップを見てみよう。</p>
+      <canvas id="flowCanvas" width="1000" height="540"></canvas>
+    </div>
+
+    <div class="panel">
+      <h2>③ マイクで録音してみよう</h2>
+      <p>標本化周波数と量子化ビット数を設定してから録音しよう。デジタル化による音質の変化を体験できます。</p>
+      <div class="controls" style="margin-top:12px;">
+        <div>
+          <label>標本化周波数: <span id="recSampleValue">8000</span> Hz</label>
+          <input type="range" id="recSampleRate" min="2000" max="48000" step="100" value="8000">
+        </div>
+        <div>
+          <label>量子化ビット数: <span id="recBitValue">8</span> bit</label>
+          <input type="range" id="recBitDepth" min="1" max="16" value="8">
+        </div>
+      </div>
+      <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button id="recordButton">🎤 録音開始（3秒）</button>
+        <button id="playRecordedButton" disabled>▶ 録音を再生</button>
+        <span id="recordStatus" style="font-size:14px; color:#666;"></span>
+      </div>
+      <canvas id="recordCanvas" width="1000" height="200" style="margin-top:15px;"></canvas>
+      <div class="info-box" id="recordInfo" style="display:none;">
+        <p id="recordDataInfo"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const frequencySlider = document.getElementById("frequency");
+    const sampleRateSlider = document.getElementById("sampleRate");
+    const bitDepthSlider = document.getElementById("bitDepth");
+    const freqValue = document.getElementById("freqValue");
+    const sampleValue = document.getElementById("sampleValue");
+    const bitValue = document.getElementById("bitValue");
+    const waveCanvas = document.getElementById("waveCanvas");
+    const waveCtx = waveCanvas.getContext("2d");
+    const flowCanvas = document.getElementById("flowCanvas");
+    const flowCtx = flowCanvas.getContext("2d");
+    const binaryData = { textContent: "" };
+    const dataInfo = document.getElementById("dataInfo");
+    let compareSource = null;
+
+    const playAnalogButton = document.getElementById("playAnalogButton");
+    const playDigitalButton = document.getElementById("playDigitalButton");
+    const stopCompareButton = document.getElementById("stopCompareButton");
+
+    function stopCompare() {
+      if (compareSource) {
+        try { compareSource.stop(); } catch(e) {}
+        compareSource.disconnect();
+        compareSource = null;
+      }
+    }
+
+    function playAnalog() {
+      stopCompare();
+      const frequency = Number(frequencySlider.value);
+      const sampleRate = 48000;
+      const numSamples = sampleRate;
+      const buffer = audioCtx.createBuffer(1, numSamples, sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < numSamples; i++) {
+        data[i] = Math.sin(2 * Math.PI * frequency * (i / sampleRate));
+      }
+      const fade = Math.min(512, numSamples);
+      for (let i = 0; i < fade; i++) data[numSamples - 1 - i] *= i / fade;
+
+      compareSource = audioCtx.createBufferSource();
+      compareSource.buffer = buffer;
+      const gain = audioCtx.createGain();
+      gain.gain.value = 0.4;
+      compareSource.connect(gain);
+      gain.connect(audioCtx.destination);
+      compareSource.start();
+      compareSource.onended = () => { compareSource = null; };
+    }
+
+    function playDigital() {
+      stopCompare();
+      const frequency = Number(frequencySlider.value);
+      const sampleRate = Number(sampleRateSlider.value);
+      const bitDepth = Number(bitDepthSlider.value);
+      const levels = Math.pow(2, bitDepth);
+      const OUTPUT_RATE = 44100;
+      const duration = 1;
+      const numSamples = Math.floor(sampleRate * duration);
+
+      const quantized = new Float32Array(numSamples);
+      for (let i = 0; i < numSamples; i++) {
+        const raw = Math.sin(2 * Math.PI * frequency * (i / sampleRate));
+        quantized[i] = Math.round((raw + 1) * (levels - 1) / 2) / ((levels - 1) / 2) - 1;
+      }
+
+      const outputSamples = Math.floor(OUTPUT_RATE * duration);
+      const buffer = audioCtx.createBuffer(1, outputSamples, OUTPUT_RATE);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < outputSamples; i++) {
+        const srcIdx = Math.floor(i / OUTPUT_RATE * sampleRate);
+        data[i] = quantized[Math.min(srcIdx, numSamples - 1)];
+      }
+
+      const fade = Math.min(512, outputSamples);
+      for (let i = 0; i < fade; i++) data[outputSamples - 1 - i] *= i / fade;
+
+      compareSource = audioCtx.createBufferSource();
+      compareSource.buffer = buffer;
+      const gain = audioCtx.createGain();
+      gain.gain.value = 0.4;
+      compareSource.connect(gain);
+      gain.connect(audioCtx.destination);
+      compareSource.start();
+      compareSource.onended = () => { compareSource = null; };
+    }
+
+    playAnalogButton.addEventListener("click", playAnalog);
+    playDigitalButton.addEventListener("click", playDigital);
+    stopCompareButton.addEventListener("click", stopCompare);
+
+    function generateWaveData() {
+      const frequency = Number(frequencySlider.value);
+      const sampleRate = Number(sampleRateSlider.value);
+      const bitDepth = Number(bitDepthSlider.value);
+
+      freqValue.textContent = frequency;
+      sampleValue.textContent = sampleRate;
+      bitValue.textContent = bitDepth;
+
+      const duration = 0.01;
+      const samples = Math.floor(sampleRate * duration);
+      const points = [];
+
+      for (let i = 0; i < samples; i++) {
+        const t = i / sampleRate;
+        const value = Math.sin(2 * Math.PI * frequency * t);
+
+        const levels = Math.pow(2, bitDepth);
+        const quantized = Math.round((value + 1) * (levels - 1) / 2) / ((levels - 1) / 2) - 1;
+
+        points.push({
+          original: value,
+          quantized
+        });
+      }
+
+      drawWave(points);
+      drawFlow(points, bitDepth);
+
+      const bitrate = sampleRate * bitDepth;
+      dataInfo.innerHTML = `
+        <strong>標本化周波数:</strong> ${sampleRate.toLocaleString()} Hz 
+        <strong>量子化ビット数:</strong> ${bitDepth} bit 
+        <strong>1秒あたりのデータ量:</strong> 約 ${(bitrate / 1000).toFixed(1)} kbit/秒（約 ${(bitrate / 8 / 1024).toFixed(1)} KB/秒）
+      `;
+    }
+
+    function drawWave(points) {
+      waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+
+      const bitDepth = Number(bitDepthSlider.value);
+      const levels = Math.pow(2, bitDepth);
+      const maxLines = 100;
+      const stepLevel = Math.max(1, Math.floor(levels / maxLines));
+      waveCtx.strokeStyle = "#eee";
+      waveCtx.lineWidth = 1;
+      for (let i = 0; i < levels; i += stepLevel) {
+        const value = -1 + (2 * i) / (levels - 1);
+        const y = 150 - value * 100;
+        waveCtx.beginPath();
+        waveCtx.moveTo(0, y);
+        waveCtx.lineTo(waveCanvas.width, y);
+        waveCtx.stroke();
+      }
+
+      const frequency = Number(frequencySlider.value);
+      const duration = 0.01;
+
+      waveCtx.beginPath();
+      for (let x = 0; x < waveCanvas.width; x++) {
+        const t = x / waveCanvas.width * duration;
+        const analogValue = Math.sin(2 * Math.PI * frequency * t);
+        const y = 150 - analogValue * 100;
+        if (x === 0) {
+          waveCtx.moveTo(x, y);
+        } else {
+          waveCtx.lineTo(x, y);
+        }
+      }
+      waveCtx.strokeStyle = "#999";
+      waveCtx.lineWidth = 2;
+      waveCtx.stroke();
+
+      waveCtx.beginPath();
+      const step = waveCanvas.width / points.length;
+      points.forEach((p, i) => {
+        const x = i * step;
+        const y = 150 - p.quantized * 100;
+        if (i === 0) {
+          waveCtx.moveTo(x, y);
+        } else {
+          waveCtx.lineTo(x, y);
+        }
+      });
+      waveCtx.strokeStyle = "blue";
+      waveCtx.lineWidth = 2;
+      waveCtx.stroke();
+
+      points.forEach((p, i) => {
+        const x = i * step;
+        const y = 150 - p.quantized * 100;
+        waveCtx.beginPath();
+        waveCtx.arc(x, y, 4, 0, Math.PI * 2);
+        waveCtx.fillStyle = "red";
+        waveCtx.fill();
+      });
+
+      const legendY = waveCanvas.height - 16;
+      waveCtx.font = "15px Yu Gothic, sans-serif";
+      let lx = 20;
+
+      waveCtx.strokeStyle = "#999"; waveCtx.lineWidth = 2;
+      waveCtx.beginPath(); waveCtx.moveTo(lx, legendY - 4); waveCtx.lineTo(lx + 24, legendY - 4); waveCtx.stroke();
+      waveCtx.fillStyle = "#666"; waveCtx.fillText("元の波形（アナログ相当）", lx + 30, legendY); lx += 210;
+
+      waveCtx.strokeStyle = "blue"; waveCtx.lineWidth = 2;
+      waveCtx.beginPath(); waveCtx.moveTo(lx, legendY - 4); waveCtx.lineTo(lx + 24, legendY - 4); waveCtx.stroke();
+      waveCtx.fillStyle = "blue"; waveCtx.fillText("デジタル化後の波形", lx + 30, legendY); lx += 190;
+
+      waveCtx.beginPath(); waveCtx.arc(lx + 12, legendY - 4, 4, 0, Math.PI * 2);
+      waveCtx.fillStyle = "red"; waveCtx.fill();
+      waveCtx.fillStyle = "red"; waveCtx.fillText("標本点（サンプル点）", lx + 30, legendY);
+    }
+
+    function drawFlow(points, bitDepth) {
+      const W = flowCanvas.width;
+      const H = flowCanvas.height;
+      const ROW = H / 3;
+      const TITLE_H = 50;
+      const PAD = 40;
+      const GRAPH_H = ROW - TITLE_H;
+      const MID = TITLE_H + GRAPH_H / 2;
+      const AMP = GRAPH_H * 0.38;
+      const frequency = Number(frequencySlider.value);
+      const duration = 0.01;
+      const levels = Math.pow(2, bitDepth);
+
+      flowCtx.clearRect(0, 0, W, H);
+
+      const bgColors = ["#f0f7ff", "#f0fff4", "#fff8f0"];
+      const borderColors = ["#4a90e2", "#27ae60", "#e67e22"];
+      const titles = [
+        "① 標本化（Sampling）  音を一定の時間間隔で測定する",
+        "② 量子化（Quantization） 測定した値をあらかじめ決まっている段階にあてはめる",
+        "③ 符号化（Encoding）  あてはめた値を0と1の数字で表す"
+      ];
+
+      for (let row = 0; row < 3; row++) {
+        const baseY = row * ROW;
+        flowCtx.fillStyle = bgColors[row]; flowCtx.fillRect(0, baseY, W, ROW);
+        flowCtx.strokeStyle = borderColors[row]; flowCtx.lineWidth = 3; flowCtx.beginPath(); flowCtx.moveTo(0, baseY); flowCtx.lineTo(W, baseY); flowCtx.stroke();
+        flowCtx.fillStyle = borderColors[row]; flowCtx.fillRect(0, baseY, 6, ROW);
+        flowCtx.fillStyle = "#333"; flowCtx.font = "bold 17px Yu Gothic, sans-serif"; flowCtx.fillText(titles[row], PAD, baseY + 34);
+      }
+
+      {
+        const baseY = 0 * ROW; const drawW = W - PAD * 2;
+        flowCtx.beginPath(); flowCtx.strokeStyle = "#aaa"; flowCtx.lineWidth = 2;
+        for (let x = 0; x < drawW; x++) {
+          const t = (x / drawW) * duration;
+          const y = baseY + MID - Math.sin(2 * Math.PI * frequency * t) * AMP;
+          x === 0 ? flowCtx.moveTo(PAD + x, y) : flowCtx.lineTo(PAD + x, y);
+        }
+        flowCtx.stroke();
+        const step = drawW / points.length;
+        points.forEach((p, i) => {
+          const x = PAD + i * step; const y = baseY + MID - p.original * AMP;
+          flowCtx.strokeStyle = "#4a90e2"; flowCtx.lineWidth = 1.5; flowCtx.beginPath(); flowCtx.moveTo(x, baseY + MID); flowCtx.lineTo(x, y); flowCtx.stroke();
+          flowCtx.beginPath(); flowCtx.arc(x, y, 4, 0, Math.PI * 2); flowCtx.fillStyle = "#4a90e2"; flowCtx.fill();
+        });
+      }
+
+      {
+        const baseY = 1 * ROW; const drawW = W - PAD * 2;
+        flowCtx.strokeStyle = "#c8e6c9"; flowCtx.lineWidth = 1;
+        const maxGuides = Math.min(levels, 32);
+        for (let i = 0; i <= maxGuides; i++) {
+          const v = -1 + (2 * i) / maxGuides; const y = baseY + MID - v * AMP;
+          flowCtx.beginPath(); flowCtx.moveTo(PAD, y); flowCtx.lineTo(W - PAD, y); flowCtx.stroke();
+        }
+        const step = drawW / points.length;
+        points.forEach((p, i) => {
+          const x = PAD + i * step; const yOrig = baseY + MID - p.original * AMP; const yQuant = baseY + MID - p.quantized * AMP;
+          if (Math.abs(yOrig - yQuant) > 2) {
+            flowCtx.strokeStyle = "#aed6ae"; flowCtx.lineWidth = 1; flowCtx.setLineDash([3, 2]);
+            flowCtx.beginPath(); flowCtx.moveTo(x, yOrig); flowCtx.lineTo(x, yQuant); flowCtx.stroke(); flowCtx.setLineDash([]);
+          }
+          flowCtx.beginPath(); flowCtx.arc(x, yQuant, 5, 0, Math.PI * 2); flowCtx.fillStyle = "#27ae60"; flowCtx.fill();
+        });
+      }
+
+      {
+        const baseY = 2 * ROW; const maxShow = Math.min(points.length, 16);
+        const binValues = points.slice(0, maxShow).map(p => {
+          const v = Math.min(levels - 1, Math.max(0, Math.floor((p.quantized + 1) * (levels / 2))));
+          return v.toString(2).padStart(bitDepth, "0");
+        });
+        const blockW = Math.min(60, (W - PAD * 2) / maxShow - 4); const blockH = 32;
+        binValues.forEach((bin, i) => {
+          const x = PAD + i * (blockW + 4);
+          flowCtx.fillStyle = i % 2 === 0 ? "#ffe0b2" : "#fff3e0"; flowCtx.strokeStyle = "#e67e22"; flowCtx.lineWidth = 1;
+          flowCtx.beginPath(); flowCtx.roundRect(x, baseY + MID - blockH / 2, blockW, blockH, 4); flowCtx.fill(); flowCtx.stroke();
+          flowCtx.font = `bold ${bitDepth <= 8 ? 13 : 10}px monospace`; flowCtx.fillStyle = "#7f3300"; flowCtx.textAlign = "center";
+          flowCtx.fillText(bin, x + blockW / 2, baseY + MID + 5);
+        });
+        flowCtx.textAlign = "left";
+      }
+    }
+
+    frequencySlider.addEventListener("input", generateWaveData);
+    sampleRateSlider.addEventListener("input", generateWaveData);
+    bitDepthSlider.addEventListener("input", generateWaveData);
+    recordButton.addEventListener("click", async () => {
+      let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const chunks = [];
+      mediaRecorder.ondataavailable = e => chunks.push(e.data);
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunks, { type: "audio/webm" });
+        const arrayBuffer = await blob.arrayBuffer();
+        const buffer = await audioCtx.decodeAudioData(arrayBuffer);
+        processAndDraw(buffer);
+        playRecordedButton.disabled = false;
+      };
+      mediaRecorder.start();
+      let elapsed = 0;
+      const count = setInterval(() => { elapsed++; recordStatus.textContent = `録音中… ${elapsed} / 3 秒`; if(elapsed >= 3) { clearInterval(count); mediaRecorder.stop(); } }, 1000);
+    });
+
+    function processAndDraw(audioBuffer) {
+      const sampleRate = Number(document.getElementById("recSampleRate").value);
+      const bitDepth = Number(document.getElementById("recBitDepth").value);
+      const levels = Math.pow(2, bitDepth);
+      const rawData = audioBuffer.getChannelData(0);
+      const numSamples = Math.floor(sampleRate * audioBuffer.duration);
+      const quantized = new Float32Array(numSamples);
+      for (let i = 0; i < numSamples; i++) {
+        const idx = Math.floor((i / sampleRate) * audioBuffer.sampleRate);
+        quantized[i] = Math.round((Math.max(-1, Math.min(1, rawData[idx])) + 1) * (levels - 1) / 2) / ((levels - 1) / 2) - 1;
+      }
+      document.getElementById("recordInfo").style.display = "block";
+      document.getElementById("recordDataInfo").innerHTML = `<strong>データ量:</strong> 約 ${Math.ceil(numSamples * bitDepth / 8 / 1024).toFixed(1)} KB`;
+      recordCtx.clearRect(0, 0, recordCanvas.width, recordCanvas.height);
+      recordCtx.beginPath(); recordCtx.strokeStyle = "#2979ff";
+      for (let x = 0; x < recordCanvas.width; x++) {
+        const idx = Math.floor(x / recordCanvas.width * numSamples);
+        const y = 100 - quantized[idx] * 80;
+        x === 0 ? recordCtx.moveTo(x, y) : recordCtx.lineTo(x, y);
+      }
+      recordCtx.stroke();
+    }
+    generateWaveData();
+  </script>
+</body>
+</html>
