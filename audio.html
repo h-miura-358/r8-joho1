@@ -173,6 +173,7 @@
         <p id="recordDataInfo"></p>
       </div>
     </div>
+
   </div>
 
   <script>
@@ -187,10 +188,11 @@
     const waveCtx = waveCanvas.getContext("2d");
     const flowCanvas = document.getElementById("flowCanvas");
     const flowCtx = flowCanvas.getContext("2d");
-    const binaryData = { textContent: "" };
+    const binaryData = { textContent: "" }; // ダミー（flowCanvasで描画）
     const dataInfo = document.getElementById("dataInfo");
-    let compareSource = null;
+    let compareSource = null; // 聴き比べ再生用
 
+    // ② 聴き比べボタン
     const playAnalogButton = document.getElementById("playAnalogButton");
     const playDigitalButton = document.getElementById("playDigitalButton");
     const stopCompareButton = document.getElementById("stopCompareButton");
@@ -203,16 +205,22 @@
       }
     }
 
-    function playAnalog() {
+    async function playAnalog() {
       stopCompare();
+      // ブラウザの自動再生ポリシーにより AudioContext が一時停止(suspended)
+      // のままだと、エラーは出ないが音が鳴らない状態になるため、再生前に再開する
+      if (audioCtx.state !== "running") {
+        await audioCtx.resume();
+      }
       const frequency = Number(frequencySlider.value);
-      const sampleRate = 48000;
-      const numSamples = sampleRate;
+      const sampleRate = 48000; // 高品質（アナログ相当）
+      const numSamples = sampleRate; // 1秒
       const buffer = audioCtx.createBuffer(1, numSamples, sampleRate);
       const data = buffer.getChannelData(0);
       for (let i = 0; i < numSamples; i++) {
         data[i] = Math.sin(2 * Math.PI * frequency * (i / sampleRate));
       }
+      // フェードアウト
       const fade = Math.min(512, numSamples);
       for (let i = 0; i < fade; i++) data[numSamples - 1 - i] *= i / fade;
 
@@ -226,22 +234,27 @@
       compareSource.onended = () => { compareSource = null; };
     }
 
-    function playDigital() {
+    async function playDigital() {
       stopCompare();
+      if (audioCtx.state !== "running") {
+        await audioCtx.resume();
+      }
       const frequency = Number(frequencySlider.value);
       const sampleRate = Number(sampleRateSlider.value);
       const bitDepth = Number(bitDepthSlider.value);
       const levels = Math.pow(2, bitDepth);
-      const OUTPUT_RATE = 44100;
-      const duration = 1;
+      const OUTPUT_RATE = 44100; // Web Audio APIの出力レート（固定）
+      const duration = 1; // 1秒
       const numSamples = Math.floor(sampleRate * duration);
 
+      // 設定された標本化周波数・ビット数で量子化したサンプルを生成
       const quantized = new Float32Array(numSamples);
       for (let i = 0; i < numSamples; i++) {
         const raw = Math.sin(2 * Math.PI * frequency * (i / sampleRate));
         quantized[i] = Math.round((raw + 1) * (levels - 1) / 2) / ((levels - 1) / 2) - 1;
       }
 
+      // 出力レート（44100Hz）にアップサンプリング（最近傍補間）
       const outputSamples = Math.floor(OUTPUT_RATE * duration);
       const buffer = audioCtx.createBuffer(1, outputSamples, OUTPUT_RATE);
       const data = buffer.getChannelData(0);
@@ -250,6 +263,7 @@
         data[i] = quantized[Math.min(srcIdx, numSamples - 1)];
       }
 
+      // フェードアウト
       const fade = Math.min(512, outputSamples);
       for (let i = 0; i < fade; i++) data[outputSamples - 1 - i] *= i / fade;
 
@@ -298,15 +312,16 @@
 
       const bitrate = sampleRate * bitDepth;
       dataInfo.innerHTML = `
-        <strong>標本化周波数:</strong> ${sampleRate.toLocaleString()} Hz 
-        <strong>量子化ビット数:</strong> ${bitDepth} bit 
-        <strong>1秒あたりのデータ量:</strong> 約 ${(bitrate / 1000).toFixed(1)} kbit/秒（約 ${(bitrate / 8 / 1024).toFixed(1)} KB/秒）
+        <strong>標本化周波数:</strong> ${sampleRate.toLocaleString()} Hz　
+        <strong>量子化ビット数:</strong> ${bitDepth} bit　
+        <strong>1秒あたりのデータ量:</strong> 約 ${(bitrate / 1000).toFixed(1)} kbit/秒（約 ${(bitrate / 8 / 1000).toFixed(1)} KB/秒）
       `;
     }
 
     function drawWave(points) {
       waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
 
+      // ★ 追加：量子化段階の目盛り（本数制限あり）
       const bitDepth = Number(bitDepthSlider.value);
       const levels = Math.pow(2, bitDepth);
       const maxLines = 100;
@@ -325,6 +340,7 @@
       const frequency = Number(frequencySlider.value);
       const duration = 0.01;
 
+      // ★ 元の灰色波形はそのまま維持
       waveCtx.beginPath();
       for (let x = 0; x < waveCanvas.width; x++) {
         const t = x / waveCanvas.width * duration;
@@ -344,7 +360,7 @@
       const step = waveCanvas.width / points.length;
       points.forEach((p, i) => {
         const x = i * step;
-        const y = 150 - p.quantized * 100;
+        const y = 150 - p.quantized * 100; // ★1行修正
         if (i === 0) {
           waveCtx.moveTo(x, y);
         } else {
@@ -364,151 +380,483 @@
         waveCtx.fill();
       });
 
+      // 凡例（下部・横一列）
       const legendY = waveCanvas.height - 16;
       waveCtx.font = "15px Yu Gothic, sans-serif";
+
       let lx = 20;
 
-      waveCtx.strokeStyle = "#999"; waveCtx.lineWidth = 2;
-      waveCtx.beginPath(); waveCtx.moveTo(lx, legendY - 4); waveCtx.lineTo(lx + 24, legendY - 4); waveCtx.stroke();
-      waveCtx.fillStyle = "#666"; waveCtx.fillText("元の波形（アナログ相当）", lx + 30, legendY); lx += 210;
+      // 灰色線
+      waveCtx.strokeStyle = "#999";
+      waveCtx.lineWidth = 2;
+      waveCtx.beginPath();
+      waveCtx.moveTo(lx, legendY - 4);
+      waveCtx.lineTo(lx + 24, legendY - 4);
+      waveCtx.stroke();
+      waveCtx.fillStyle = "#666";
+      waveCtx.fillText("元の波形（アナログ相当）", lx + 30, legendY);
+      lx += 210;
 
-      waveCtx.strokeStyle = "blue"; waveCtx.lineWidth = 2;
-      waveCtx.beginPath(); waveCtx.moveTo(lx, legendY - 4); waveCtx.lineTo(lx + 24, legendY - 4); waveCtx.stroke();
-      waveCtx.fillStyle = "blue"; waveCtx.fillText("デジタル化後の波形", lx + 30, legendY); lx += 190;
+      // 青線
+      waveCtx.strokeStyle = "blue";
+      waveCtx.lineWidth = 2;
+      waveCtx.beginPath();
+      waveCtx.moveTo(lx, legendY - 4);
+      waveCtx.lineTo(lx + 24, legendY - 4);
+      waveCtx.stroke();
+      waveCtx.fillStyle = "blue";
+      waveCtx.fillText("デジタル化後の波形", lx + 30, legendY);
+      lx += 190;
 
-      waveCtx.beginPath(); waveCtx.arc(lx + 12, legendY - 4, 4, 0, Math.PI * 2);
-      waveCtx.fillStyle = "red"; waveCtx.fill();
-      waveCtx.fillStyle = "red"; waveCtx.fillText("標本点（サンプル点）", lx + 30, legendY);
+      // 赤点
+      waveCtx.beginPath();
+      waveCtx.arc(lx + 12, legendY - 4, 4, 0, Math.PI * 2);
+      waveCtx.fillStyle = "red";
+      waveCtx.fill();
+      waveCtx.fillStyle = "red";
+      waveCtx.fillText("標本点（サンプル点）", lx + 30, legendY);
     }
 
     function drawFlow(points, bitDepth) {
       const W = flowCanvas.width;
       const H = flowCanvas.height;
-      const ROW = H / 3;
-      const TITLE_H = 50;
-      const PAD = 40;
-      const GRAPH_H = ROW - TITLE_H;
-      const MID = TITLE_H + GRAPH_H / 2;
-      const AMP = GRAPH_H * 0.38;
+      const ROW = H / 3;        // 各段の高さ
+      const TITLE_H = 50;       // タイトル行の高さ
+      const PAD = 40;           // 左右余白
+      const GRAPH_H = ROW - TITLE_H; // グラフ描画エリアの高さ
+      const MID = TITLE_H + GRAPH_H / 2; // 各段内のグラフ中央Y（段baseYからの相対）
+      const AMP = GRAPH_H * 0.38; // 振幅
       const frequency = Number(frequencySlider.value);
       const duration = 0.01;
       const levels = Math.pow(2, bitDepth);
 
       flowCtx.clearRect(0, 0, W, H);
 
+      // ── 段ごとの背景色 ──
       const bgColors = ["#f0f7ff", "#f0fff4", "#fff8f0"];
       const borderColors = ["#4a90e2", "#27ae60", "#e67e22"];
       const titles = [
-        "① 標本化（Sampling）  音を一定の時間間隔で測定する",
-        "② 量子化（Quantization） 測定した値をあらかじめ決まっている段階にあてはめる",
-        "③ 符号化（Encoding）  あてはめた値を0と1の数字で表す"
+        "① 標本化（Sampling）　　音を一定の時間間隔で測定する",
+        "② 量子化（Quantization）　測定した値をあらかじめ決まっている段階にあてはめる",
+        "③ 符号化（Encoding）　　あてはめた値を0と1の数字で表す"
       ];
 
       for (let row = 0; row < 3; row++) {
         const baseY = row * ROW;
-        flowCtx.fillStyle = bgColors[row]; flowCtx.fillRect(0, baseY, W, ROW);
-        flowCtx.strokeStyle = borderColors[row]; flowCtx.lineWidth = 3; flowCtx.beginPath(); flowCtx.moveTo(0, baseY); flowCtx.lineTo(W, baseY); flowCtx.stroke();
-        flowCtx.fillStyle = borderColors[row]; flowCtx.fillRect(0, baseY, 6, ROW);
-        flowCtx.fillStyle = "#333"; flowCtx.font = "bold 17px Yu Gothic, sans-serif"; flowCtx.fillText(titles[row], PAD, baseY + 34);
+
+        // 背景
+        flowCtx.fillStyle = bgColors[row];
+        flowCtx.fillRect(0, baseY, W, ROW);
+
+        // 区切り線
+        flowCtx.strokeStyle = borderColors[row];
+        flowCtx.lineWidth = 3;
+        flowCtx.beginPath();
+        flowCtx.moveTo(0, baseY);
+        flowCtx.lineTo(W, baseY);
+        flowCtx.stroke();
+
+        // 左帯（アクセントカラー）
+        flowCtx.fillStyle = borderColors[row];
+        flowCtx.fillRect(0, baseY, 6, ROW);
+
+        // タイトル
+        flowCtx.fillStyle = "#333";
+        flowCtx.font = "bold 17px Yu Gothic, sans-serif";
+        flowCtx.fillText(titles[row], PAD, baseY + 34);
       }
 
+      // ── 段①：標本化 ── アナログ波形 + 縦棒サンプル点 ──
       {
-        const baseY = 0 * ROW; const drawW = W - PAD * 2;
-        flowCtx.beginPath(); flowCtx.strokeStyle = "#aaa"; flowCtx.lineWidth = 2;
+        const baseY = 0 * ROW;
+        const drawW = W - PAD * 2;
+
+        // アナログ波形（灰）
+        flowCtx.beginPath();
+        flowCtx.strokeStyle = "#aaa";
+        flowCtx.lineWidth = 2;
         for (let x = 0; x < drawW; x++) {
           const t = (x / drawW) * duration;
           const y = baseY + MID - Math.sin(2 * Math.PI * frequency * t) * AMP;
           x === 0 ? flowCtx.moveTo(PAD + x, y) : flowCtx.lineTo(PAD + x, y);
         }
         flowCtx.stroke();
+
+        // サンプル縦棒＋点
         const step = drawW / points.length;
         points.forEach((p, i) => {
-          const x = PAD + i * step; const y = baseY + MID - p.original * AMP;
-          flowCtx.strokeStyle = "#4a90e2"; flowCtx.lineWidth = 1.5; flowCtx.beginPath(); flowCtx.moveTo(x, baseY + MID); flowCtx.lineTo(x, y); flowCtx.stroke();
-          flowCtx.beginPath(); flowCtx.arc(x, y, 4, 0, Math.PI * 2); flowCtx.fillStyle = "#4a90e2"; flowCtx.fill();
+          const x = PAD + i * step;
+          const y = baseY + MID - p.original * AMP;
+          flowCtx.strokeStyle = "#4a90e2";
+          flowCtx.lineWidth = 1.5;
+          flowCtx.beginPath();
+          flowCtx.moveTo(x, baseY + MID);
+          flowCtx.lineTo(x, y);
+          flowCtx.stroke();
+          flowCtx.beginPath();
+          flowCtx.arc(x, y, 4, 0, Math.PI * 2);
+          flowCtx.fillStyle = "#4a90e2";
+          flowCtx.fill();
         });
+
+        // 凡例（右上・タイトル行内）
+        flowCtx.font = "15px Yu Gothic, sans-serif";
+        flowCtx.fillStyle = "#888";
+        flowCtx.fillText("─ アナログ波形", W - 220, baseY + TITLE_H - 10);
+        flowCtx.fillStyle = "#4a90e2";
+        flowCtx.fillText("● 標本点", W - 110, baseY + TITLE_H - 10);
       }
 
+      // ── 段②：量子化 ── 標本点を階段状に ──
       {
-        const baseY = 1 * ROW; const drawW = W - PAD * 2;
-        flowCtx.strokeStyle = "#c8e6c9"; flowCtx.lineWidth = 1;
+        const baseY = 1 * ROW;
+        const drawW = W - PAD * 2;
+
+        // 量子化の段（横の補助線）
+        flowCtx.strokeStyle = "#c8e6c9";
+        flowCtx.lineWidth = 1;
         const maxGuides = Math.min(levels, 32);
         for (let i = 0; i <= maxGuides; i++) {
-          const v = -1 + (2 * i) / maxGuides; const y = baseY + MID - v * AMP;
-          flowCtx.beginPath(); flowCtx.moveTo(PAD, y); flowCtx.lineTo(W - PAD, y); flowCtx.stroke();
+          const v = -1 + (2 * i) / maxGuides;
+          const y = baseY + MID - v * AMP;
+          flowCtx.beginPath();
+          flowCtx.moveTo(PAD, y);
+          flowCtx.lineTo(W - PAD, y);
+          flowCtx.stroke();
         }
+
+        // 元の点（薄い灰）
         const step = drawW / points.length;
         points.forEach((p, i) => {
-          const x = PAD + i * step; const yOrig = baseY + MID - p.original * AMP; const yQuant = baseY + MID - p.quantized * AMP;
-          if (Math.abs(yOrig - yQuant) > 2) {
-            flowCtx.strokeStyle = "#aed6ae"; flowCtx.lineWidth = 1; flowCtx.setLineDash([3, 2]);
-            flowCtx.beginPath(); flowCtx.moveTo(x, yOrig); flowCtx.lineTo(x, yQuant); flowCtx.stroke(); flowCtx.setLineDash([]);
-          }
-          flowCtx.beginPath(); flowCtx.arc(x, yQuant, 5, 0, Math.PI * 2); flowCtx.fillStyle = "#27ae60"; flowCtx.fill();
+          const x = PAD + i * step;
+          const y = baseY + MID - p.original * AMP;
+          flowCtx.beginPath();
+          flowCtx.arc(x, y, 3, 0, Math.PI * 2);
+          flowCtx.fillStyle = "#ccc";
+          flowCtx.fill();
         });
+
+        // 量子化後の点＋矢印（元→量子化）
+        points.forEach((p, i) => {
+          const x = PAD + i * step;
+          const yOrig = baseY + MID - p.original * AMP;
+          const yQuant = baseY + MID - p.quantized * AMP;
+
+          // 矢印（元→量子化）
+          if (Math.abs(yOrig - yQuant) > 2) {
+            flowCtx.strokeStyle = "#aed6ae";
+            flowCtx.lineWidth = 1;
+            flowCtx.setLineDash([3, 2]);
+            flowCtx.beginPath();
+            flowCtx.moveTo(x, yOrig);
+            flowCtx.lineTo(x, yQuant);
+            flowCtx.stroke();
+            flowCtx.setLineDash([]);
+          }
+
+          flowCtx.beginPath();
+          flowCtx.arc(x, yQuant, 5, 0, Math.PI * 2);
+          flowCtx.fillStyle = "#27ae60";
+          flowCtx.fill();
+        });
+
+        // 凡例（右上・タイトル行内）
+        flowCtx.font = "15px Yu Gothic, sans-serif";
+        flowCtx.fillStyle = "#bbb";
+        flowCtx.fillText("○ 元の標本点", W - 240, baseY + TITLE_H - 10);
+        flowCtx.fillStyle = "#27ae60";
+        flowCtx.fillText("● 量子化後", W - 120, baseY + TITLE_H - 10);
       }
 
+      // ── 段③：符号化 ── 2進数テキスト ──
       {
-        const baseY = 2 * ROW; const maxShow = Math.min(points.length, 16);
+        const baseY = 2 * ROW;
+        const maxShow = Math.min(points.length, 16);
         const binValues = points.slice(0, maxShow).map(p => {
           const v = Math.min(levels - 1, Math.max(0, Math.floor((p.quantized + 1) * (levels / 2))));
           return v.toString(2).padStart(bitDepth, "0");
         });
-        const blockW = Math.min(60, (W - PAD * 2) / maxShow - 4); const blockH = 32;
+
+        // ブロック描画
+        const blockW = Math.min(60, (W - PAD * 2) / maxShow - 4);
+        const blockH = 32;
+        const startX = PAD;
+        const startY = baseY + MID - blockH / 2;
+
         binValues.forEach((bin, i) => {
-          const x = PAD + i * (blockW + 4);
-          flowCtx.fillStyle = i % 2 === 0 ? "#ffe0b2" : "#fff3e0"; flowCtx.strokeStyle = "#e67e22"; flowCtx.lineWidth = 1;
-          flowCtx.beginPath(); flowCtx.roundRect(x, baseY + MID - blockH / 2, blockW, blockH, 4); flowCtx.fill(); flowCtx.stroke();
-          flowCtx.font = `bold ${bitDepth <= 8 ? 13 : 10}px monospace`; flowCtx.fillStyle = "#7f3300"; flowCtx.textAlign = "center";
-          flowCtx.fillText(bin, x + blockW / 2, baseY + MID + 5);
+          const x = startX + i * (blockW + 4);
+          flowCtx.fillStyle = i % 2 === 0 ? "#ffe0b2" : "#fff3e0";
+          flowCtx.strokeStyle = "#e67e22";
+          flowCtx.lineWidth = 1;
+          flowCtx.beginPath();
+          flowCtx.roundRect(x, startY, blockW, blockH, 4);
+          flowCtx.fill();
+          flowCtx.stroke();
+
+          const fontSize = bitDepth <= 8 ? 13 : 10;
+          flowCtx.font = `bold ${fontSize}px monospace`;
+          flowCtx.fillStyle = "#7f3300";
+          flowCtx.textAlign = "center";
+          flowCtx.fillText(bin, x + blockW / 2, startY + blockH / 2 + fontSize / 2 - 1);
         });
         flowCtx.textAlign = "left";
+
+        // 補足テキスト（ブロック下）
+        flowCtx.font = "13px Yu Gothic, sans-serif";
+        flowCtx.fillStyle = "#888";
+        flowCtx.fillText(`（先頭 ${maxShow} サンプル分 / 各 ${bitDepth} ビット）`, PAD, baseY + MID + blockH / 2 + 22);
       }
     }
 
-    frequencySlider.addEventListener("input", generateWaveData);
-    sampleRateSlider.addEventListener("input", generateWaveData);
-    bitDepthSlider.addEventListener("input", generateWaveData);
-    recordButton.addEventListener("click", async () => {
-      let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      const chunks = [];
-      mediaRecorder.ondataavailable = e => chunks.push(e.data);
-      mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
-        const blob = new Blob(chunks, { type: "audio/webm" });
-        const arrayBuffer = await blob.arrayBuffer();
-        const buffer = await audioCtx.decodeAudioData(arrayBuffer);
-        processAndDraw(buffer);
-        playRecordedButton.disabled = false;
-      };
-      mediaRecorder.start();
-      let elapsed = 0;
-      const count = setInterval(() => { elapsed++; recordStatus.textContent = `録音中… ${elapsed} / 3 秒`; if(elapsed >= 3) { clearInterval(count); mediaRecorder.stop(); } }, 1000);
+    playAnalogButton.addEventListener("click", playAnalog);
+    playDigitalButton.addEventListener("click", playDigital);
+    stopCompareButton.addEventListener("click", stopCompare);
+    const recordButton = document.getElementById("recordButton");
+    const playRecordedButton = document.getElementById("playRecordedButton");
+    const recordStatus = document.getElementById("recordStatus");
+    const recordCanvas = document.getElementById("recordCanvas");
+    const recordCtx = recordCanvas.getContext("2d");
+    const recordInfo = document.getElementById("recordInfo");
+    const recordDataInfo = document.getElementById("recordDataInfo");
+    const recSampleRateSlider = document.getElementById("recSampleRate");
+    const recBitDepthSlider = document.getElementById("recBitDepth");
+    const recSampleValue = document.getElementById("recSampleValue");
+    const recBitValue = document.getElementById("recBitValue");
+
+    recSampleRateSlider.addEventListener("input", () => {
+      recSampleValue.textContent = recSampleRateSlider.value;
+      if (recordedBuffer) processAndDraw(recordedBuffer);
+    });
+    recBitDepthSlider.addEventListener("input", () => {
+      recBitValue.textContent = recBitDepthSlider.value;
+      if (recordedBuffer) processAndDraw(recordedBuffer);
     });
 
+    let recordedBuffer = null;   // AudioBuffer（録音生データ）
+    let processedBuffer = null;  // 量子化・再サンプリング後のバッファ
+
+    function onSliderChangeWithRecording() {
+      generateWaveData();
+    }
+    frequencySlider.addEventListener("input", onSliderChangeWithRecording);
+    sampleRateSlider.addEventListener("input", onSliderChangeWithRecording);
+    bitDepthSlider.addEventListener("input", onSliderChangeWithRecording);
+
+    recordButton.addEventListener("click", async () => {
+      // ブラウザの自動再生ポリシーにより AudioContext が一時停止のままだと
+      // 録音後の再生が無音のまま失敗するため、ユーザー操作のタイミングで再開しておく
+      if (audioCtx.state !== "running") {
+        try { await audioCtx.resume(); } catch (e) {}
+      }
+
+      // マイク許可取得
+      // ※ getUserMedia はセキュアコンテキスト（https:// または localhost）でのみ動作する。
+      //   file:// で直接開いている場合などは navigator.mediaDevices 自体が
+      //   存在せず、原因が分かりにくいまま録音が失敗するため、先に判定する。
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        recordStatus.textContent = "録音にはHTTPS（またはlocalhost）環境が必要です。file:// で直接開いている場合はローカルサーバー等を利用してください。";
+        return;
+      }
+
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (e) {
+        recordStatus.textContent = `マイクへのアクセスが拒否されました。（${e.name || e.message || "不明なエラー"}）`;
+        return;
+      }
+
+      // 録音開始
+      recordButton.disabled = true;
+      playRecordedButton.disabled = true;
+      recordButton.classList.add("recording");
+      recordStatus.textContent = "録音中… 0 / 3 秒";
+
+      // ブラウザによって対応する録音形式が異なるため、利用可能な形式を選択する
+      // （未対応の形式を指定すると MediaRecorder の生成自体が失敗するため）
+      const candidateTypes = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/ogg;codecs=opus",
+        "audio/mp4"
+      ];
+      const mimeType = candidateTypes.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t));
+
+      let mediaRecorder;
+      try {
+        mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      } catch (e) {
+        stream.getTracks().forEach(t => t.stop());
+        recordButton.classList.remove("recording");
+        recordButton.disabled = false;
+        recordStatus.textContent = "この端末・ブラウザでは録音がサポートされていません。";
+        return;
+      }
+      const chunks = [];
+
+      mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        recordButton.classList.remove("recording");
+        recordButton.disabled = false;
+        recordStatus.textContent = "処理中…";
+
+        // Blob → ArrayBuffer → AudioBuffer
+        const blob = new Blob(chunks, { type: mediaRecorder.mimeType || "audio/webm" });
+        const arrayBuffer = await blob.arrayBuffer();
+        try {
+          recordedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        } catch(e) {
+          recordStatus.textContent = "音声のデコードに失敗しました。もう一度お試しください。";
+          return;
+        }
+
+        try {
+          processAndDraw(recordedBuffer);
+          playRecordedButton.disabled = false;
+          recordStatus.textContent = "録音完了！ スライダーを動かすと再処理されます。";
+        } catch (e) {
+          recordStatus.textContent = "波形の処理中にエラーが発生しました。";
+        }
+      };
+
+      mediaRecorder.start();
+
+      // カウントダウン
+      let elapsed = 0;
+      const countdown = setInterval(() => {
+        elapsed++;
+        recordStatus.textContent = `録音中… ${elapsed} / 3 秒`;
+        if (elapsed >= 3) {
+          clearInterval(countdown);
+          mediaRecorder.stop();
+        }
+      }, 1000);
+    });
+
+    // 録音データを録音パネルのスライダー設定で量子化して描画
     function processAndDraw(audioBuffer) {
-      const sampleRate = Number(document.getElementById("recSampleRate").value);
-      const bitDepth = Number(document.getElementById("recBitDepth").value);
+      const sampleRate = Number(recSampleRateSlider.value);
+      const bitDepth = Number(recBitDepthSlider.value);
       const levels = Math.pow(2, bitDepth);
+
+      // チャンネル0のPCMデータを取得（元の録音レート）
       const rawData = audioBuffer.getChannelData(0);
-      const numSamples = Math.floor(sampleRate * audioBuffer.duration);
+      const originalRate = audioBuffer.sampleRate;
+
+      // ダウンサンプリング（録音レート → 設定レート）
+      const duration = audioBuffer.duration; // 約3秒
+      const numSamples = Math.floor(sampleRate * duration);
+      const downsampled = new Float32Array(numSamples);
+
+      for (let i = 0; i < numSamples; i++) {
+        // 元データの対応インデックス（線形補間）
+        const srcIdx = (i / sampleRate) * originalRate;
+        const lo = Math.floor(srcIdx);
+        const hi = Math.min(lo + 1, rawData.length - 1);
+        const frac = srcIdx - lo;
+        downsampled[i] = rawData[lo] * (1 - frac) + rawData[hi] * frac;
+      }
+
+      // 量子化
       const quantized = new Float32Array(numSamples);
       for (let i = 0; i < numSamples; i++) {
-        const idx = Math.floor((i / sampleRate) * audioBuffer.sampleRate);
-        quantized[i] = Math.round((Math.max(-1, Math.min(1, rawData[idx])) + 1) * (levels - 1) / 2) / ((levels - 1) / 2) - 1;
+        const v = Math.max(-1, Math.min(1, downsampled[i]));
+        quantized[i] = Math.round((v + 1) * (levels - 1) / 2) / ((levels - 1) / 2) - 1;
       }
-      document.getElementById("recordInfo").style.display = "block";
-      document.getElementById("recordDataInfo").innerHTML = `<strong>データ量:</strong> 約 ${Math.ceil(numSamples * bitDepth / 8 / 1024).toFixed(1)} KB`;
-      recordCtx.clearRect(0, 0, recordCanvas.width, recordCanvas.height);
-      recordCtx.beginPath(); recordCtx.strokeStyle = "#2979ff";
-      for (let x = 0; x < recordCanvas.width; x++) {
-        const idx = Math.floor(x / recordCanvas.width * numSamples);
-        const y = 100 - quantized[idx] * 80;
+
+      // 波形描画（先に描画しておくことで、再生用バッファの生成に問題があっても表示は更新される）
+      drawRecordedWave(downsampled, quantized, numSamples);
+
+      // AudioBuffer として保存（再生用）
+      // ※ Web Audio API の AudioBuffer は sampleRate に最小値（8,000Hz）などの制約があるため、
+      //   標本化周波数スライダーの値（2,000Hz〜設定可能）をそのままバッファの sampleRate に
+      //   使うと、8,000Hz未満を選んだ際に createBuffer が例外を発生し、波形表示・再生の
+      //   両方が停止してしまっていた。そのため、再生用バッファは常に有効な
+      //   audioCtx.sampleRate で作成し、量子化済みデータ（quantized）を最近傍補間で
+      //   そのレートに変換して書き込むように修正。
+      const ctx = audioCtx;
+      const OUTPUT_RATE = ctx.sampleRate;
+      const outputSamples = Math.max(1, Math.round(OUTPUT_RATE * duration));
+      processedBuffer = ctx.createBuffer(1, outputSamples, OUTPUT_RATE);
+      const outData = processedBuffer.getChannelData(0);
+      for (let i = 0; i < outputSamples; i++) {
+        const srcIdx = Math.min(numSamples - 1, Math.floor((i / OUTPUT_RATE) * sampleRate));
+        outData[i] = quantized[srcIdx];
+      }
+
+      // 情報表示
+      const bitrate = sampleRate * bitDepth;
+      const dataBytes = Math.ceil(numSamples * bitDepth / 8);
+      recordInfo.style.display = "block";
+      recordDataInfo.innerHTML = `
+        <strong>録音時間:</strong> 約 ${duration.toFixed(1)} 秒　
+        <strong>サンプル数:</strong> ${numSamples.toLocaleString()} 個　
+        <strong>ビットレート:</strong> ${(bitrate / 1000).toFixed(1)} kbit/秒　
+        <strong>データ量（概算）:</strong> 約 ${(dataBytes / 1000).toFixed(1)} KB
+      `;
+    }
+
+    function drawRecordedWave(original, quantized, numSamples) {
+      const W = recordCanvas.width;
+      const H = recordCanvas.height;
+      const mid = H / 2;
+      const amp = mid * 0.85;
+
+      recordCtx.clearRect(0, 0, W, H);
+
+      // 中央線
+      recordCtx.strokeStyle = "#ddd";
+      recordCtx.lineWidth = 1;
+      recordCtx.beginPath();
+      recordCtx.moveTo(0, mid);
+      recordCtx.lineTo(W, mid);
+      recordCtx.stroke();
+
+      // 元波形（灰色）
+      recordCtx.beginPath();
+      recordCtx.strokeStyle = "#bbb";
+      recordCtx.lineWidth = 1;
+      for (let x = 0; x < W; x++) {
+        const idx = Math.floor(x / W * numSamples);
+        const y = mid - original[idx] * amp;
         x === 0 ? recordCtx.moveTo(x, y) : recordCtx.lineTo(x, y);
       }
       recordCtx.stroke();
+
+      // 量子化波形（青）
+      recordCtx.beginPath();
+      recordCtx.strokeStyle = "#2979ff";
+      recordCtx.lineWidth = 2;
+      for (let x = 0; x < W; x++) {
+        const idx = Math.floor(x / W * numSamples);
+        const y = mid - quantized[idx] * amp;
+        x === 0 ? recordCtx.moveTo(x, y) : recordCtx.lineTo(x, y);
+      }
+      recordCtx.stroke();
+
+      // 凡例
+      recordCtx.font = "13px Yu Gothic, sans-serif";
+      recordCtx.fillStyle = "#999";
+      recordCtx.fillText("▬ 元の波形（アナログ相当）", 12, 18);
+      recordCtx.fillStyle = "#2979ff";
+      recordCtx.fillText("▬ デジタル化後の波形", 12, 36);
     }
+
+    // 録音データを再生
+    playRecordedButton.addEventListener("click", async () => {
+      if (!processedBuffer) return;
+      if (audioCtx.state !== "running") {
+        await audioCtx.resume();
+      }
+      const source = audioCtx.createBufferSource();
+      source.buffer = processedBuffer;
+      source.connect(audioCtx.destination);
+      source.start();
+      playRecordedButton.disabled = true;
+      source.onended = () => { playRecordedButton.disabled = false; };
+    });
+
     generateWaveData();
   </script>
 </body>
