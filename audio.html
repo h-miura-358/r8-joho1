@@ -711,16 +711,35 @@
           return;
         }
 
+        // 診断：デコードされた音声データが実際に信号を含んでいるか確認
+        // （無音・ほぼ無音の場合、波形が見えず・再生しても音が聞こえない）
+        const checkData = recordedBuffer.getChannelData(0);
+        let peak = 0;
+        for (let i = 0; i < checkData.length; i++) {
+          const a = Math.abs(checkData[i]);
+          if (a > peak) peak = a;
+        }
+        console.log("録音デコード結果:", {
+          duration: recordedBuffer.duration,
+          sampleRate: recordedBuffer.sampleRate,
+          length: recordedBuffer.length,
+          peakAmplitude: peak
+        });
+
         try {
           processAndDraw(recordedBuffer);
           playRecordedButton.disabled = false;
-          recordStatus.textContent = "録音完了！ スライダーを動かすと再処理されます。";
+          if (peak < 0.005) {
+            recordStatus.textContent = `録音完了（振幅レベル: ${peak.toFixed(4)} ※ほぼ無音です。マイクの音量設定や入力デバイスをご確認ください）`;
+          } else {
+            recordStatus.textContent = `録音完了！（振幅レベル: ${peak.toFixed(3)}） スライダーを動かすと再処理されます。`;
+          }
         } catch (e) {
           recordStatus.textContent = "波形の処理中にエラーが発生しました。";
         }
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(250); // 250msごとにチャンク出力（単一チャンクによるコンテナ不整合を回避）
 
       // カウントダウン
       let elapsed = 0;
