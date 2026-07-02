@@ -730,9 +730,9 @@
           processAndDraw(recordedBuffer);
           playRecordedButton.disabled = false;
           if (peak < 0.005) {
-            recordStatus.textContent = `録音完了（振幅レベル: ${peak.toFixed(4)} ※ほぼ無音です。マイクの音量設定や入力デバイスをご確認ください）`;
+            recordStatus.textContent = "録音できましたが、ほぼ無音のようです。マイクの音量設定や入力デバイスをご確認ください。";
           } else {
-            recordStatus.textContent = `録音完了！（振幅レベル: ${peak.toFixed(3)}） スライダーを動かすと再処理されます。`;
+            recordStatus.textContent = "録音完了！ スライダーを動かすと再処理されます。";
           }
         } catch (e) {
           recordStatus.textContent = "波形の処理中にエラーが発生しました。";
