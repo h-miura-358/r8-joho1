@@ -38,7 +38,7 @@
     <ul style="margin:0; padding-left:20px;">
       <li>なぜ文字をコードで表す必要があるのか、その<strong>背景と仕組み</strong>を理解する</li>
       <li>文字と文字コード（16進数・2進数）を<strong>相互変換</strong>する</li>
-      <li>文字コードの方式（ASCII・Unicode・UTF-8）の<strong>違い</strong>を理解する</li>
+      <li>文字コードの方式（ASCII・Shift_JIS・Unicode・UTF-8）の<strong>違い</strong>を理解する</li>
       <li><strong>文字化け</strong>が起きる仕組みを体験する</li>
     </ul>
   </div>
@@ -47,31 +47,37 @@
     <h2>① なぜ文字をコードで表すのか</h2>
     <p style="margin:0 0 16px; color:#555;">コンピュータは0と1しか扱えません。そのため、文字も数値に変換して処理します。</p>
 
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
-      <div style="background:#f0f7ff; border-left:4px solid #4a90e2; padding:16px; border-radius:8px;">
-        <h3 style="margin:0 0 8px; color:#2c3e9e;">📋 文字コードとは</h3>
+    <div style="background:#f9f9f9; padding:14px; border-radius:8px; margin-bottom:16px; border:1px solid #eee;">
+      <strong style="font-size:16px; display:block; margin-bottom:6px;">📋 文字コードとは</strong>
         <p style="margin:0 0 8px;">世界中のすべての文字に<strong>固有の番号（コードポイント）</strong>を割り当てたものです。</p>
         <p style="margin:0;">例：「A」→ 65、「あ」→ 12354、「😊」→ 128522</p>
-      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:16px;">
       <div style="background:#e8f5e9; border-left:4px solid #27ae60; padding:16px; border-radius:8px;">
         <h3 style="margin:0 0 8px; color:#1a5c2a;">🔤 ASCII（アスキー）</h3>
-        <p style="margin:0 0 8px;">1960年代にアメリカで作られた最初の文字コード規格。英数字・記号を<strong>7bit（128種類）</strong>で表します。</p>
-        <p style="margin:0;">日本語などは表現できないため、後に拡張必要になりました。</p>
-      </div>
-      <div style="background:#fff3e0; border-left:4px solid #e67e22; padding:16px; border-radius:8px;">
-        <h3 style="margin:0 0 8px; color:#7f3300;">🌏 Unicode（ユニコード）</h3>
-        <p style="margin:0 0 8px;">世界中のほぼすべての文字・絵文字を統一した規格。現在<strong>14万字以上</strong>を収録しています。</p>
-        <p style="margin:0;">UTF-8はUnicodeを効率よく保存する方式で、現在最も広く使われています。</p>
+        <p style="margin:0 0 8px;">1960年代にアメリカで作られた最初の文字コード規格。英数字・記号を<strong>7bit（128種類）</strong>の1バイトで表します。</p>
+        <p style="margin:0;">日本語などは表現できないため、後に各国で独自の拡張が必要になりました。</p>
       </div>
       <div style="background:#f3e5f5; border-left:4px solid #8e44ad; padding:16px; border-radius:8px;">
-        <h3 style="margin:0 0 8px; color:#5b2c6f;">📏 UTF-8のデータ量</h3>
-        <p style="margin:0 0 8px;">文字の種類によってバイト数が変わります。</p>
-        <ul style="margin:0; padding-left:18px; font-size:14px; line-height:1.9;">
-          <li>英数字・記号：<strong>1 byte</strong></li>
-          <li>ひらがな・漢字など：<strong>3 byte</strong></li>
-          <li>絵文字など：<strong>4 byte</strong></li>
-        </ul>
+        <h3 style="margin:0 0 8px; color:#5b2c6f;">🗾 Shift_JIS（シフトジス）</h3>
+        <p style="margin:0 0 8px;">日本語を効率よく扱うために作られた規格。英数字は<strong>1バイト</strong>、ひらがなや漢字は<strong>2バイト</strong>で表します。</p>
+        <p style="margin:0;">日本のWindowsなどで長く標準として使われ、文字化けの主な原因にもなります。</p>
       </div>
+      <div style="background:#fff3e0; border-left:4px solid #e67e22; padding:16px; border-radius:8px;">
+        <h3 style="margin:0 0 8px; color:#7f3300;">🌏 Unicode / UTF-8</h3>
+        <p style="margin:0 0 8px;">世界中の文字や絵文字を1つの規格で統一したものです。<strong>UTF-8</strong>はそのデータを保存・通信する最も代表的な方式です。</p>
+        <p style="margin:0;">文字に応じて<strong>1〜4バイト</strong>に変動し、現在のインターネットの主流です。</p>
+      </div>
+    </div>
+
+    <div style="background:#f9f9f9; padding:14px; border-radius:8px; margin-top:16px; border:1px solid #eee;">
+      <strong style="font-size:16px; display:block; margin-bottom:6px;">📊 各文字コードのデータ量（バイト数）の違い</strong>
+      <ul style="margin:0; padding-left:20px; font-size:14px; line-height:1.7;">
+        <li><strong>ASCII</strong>：英数字のみ <strong>1 byte</strong> （日本語は変換不可）</li>
+        <li><strong>Shift_JIS</strong>：英数字 <strong>1 byte</strong> ／ ひらがな・漢字 <strong>2 byte</strong></li>
+        <li><strong>UTF-8</strong>：英数字 <strong>1 byte</strong> ／ ひらがな・漢字 <strong>3 byte</strong> ／ 絵文字 <strong>4 byte</strong></li>
+      </ul>
     </div>
   </div>
 
@@ -92,6 +98,7 @@
         <label style="font-weight:bold; display:block; margin-bottom:6px;">文字コード方式</label>
         <select id="encodingSelect">
           <option value="utf8">UTF-8</option>
+          <option value="sjis">Shift_JIS</option>
           <option value="utf16">UTF-16</option>
           <option value="ascii">ASCII（英数字のみ）</option>
         </select>
@@ -126,9 +133,9 @@
     <div class="try-box">
       <strong>試してみよう！</strong>
       <ul style="margin:6px 0 0; padding-left:20px;">
-        <li>英字1文字とひらがな1文字でバイト数はどう違う？</li>
-        <li>絵文字はいくつのバイトを使っている？</li>
-        <li>UTF-8とASCIIで英字のコードは同じ？</li>
+        <li>日本語を入力したとき、<span class="highlight">UTF-8（3バイト）</span>と<span class="highlight">Shift_JIS（2バイト）</span>でデータ量がどう変わる？</li>
+        <li>絵文字（😊）を <span class="highlight">Shift_JIS</span> に切り替えるとどうなる？（変換できる？）</li>
+        <li>UTF-8とASCIIで、英字（ABCなど）のコードポイントや16進数は同じ？</li>
       </ul>
     </div>
 
@@ -250,6 +257,32 @@
   const sourceEncoding = document.getElementById("sourceEncoding");
   const targetEncoding = document.getElementById("targetEncoding");
 
+  // ブラウザ上で文字を正確に単一Shift_JISコードへ逆走査エンコードする関数
+  function encodeToShiftJIS(char) {
+    if (char.codePointAt(0) <= 127) {
+      return new Uint8Array([char.charCodeAt(0)]);
+    }
+    const decoder = new TextDecoder("shift-jis", { fatal: true });
+    // JIS第1・第2水準
+    for (let b1 = 0x81; b1 <= 0xFC; b1++) {
+      if (b1 > 0x9F && b1 < 0xE0) continue;
+      for (let b2 = 0x40; b2 <= 0xFC; b2++) {
+        if (b2 === 0x7F) continue;
+        const testBytes = new Uint8Array([b1, b2]);
+        try {
+          if (decoder.decode(testBytes) === char) return testBytes;
+        } catch (e) {}
+      }
+    }
+    // 半角カタカナ
+    for (let b = 0xA1; b <= 0xDF; b++) {
+      try {
+        if (decoder.decode(new Uint8Array([b])) === char) return new Uint8Array([b]);
+      } catch (e) {}
+    }
+    return null;
+  }
+
   function getEncodingData(char, encoding) {
     const cp = char.codePointAt(0);
     if (encoding === "ascii") {
@@ -259,6 +292,20 @@
     if (encoding === "utf16") {
       return { hex: cp.toString(16).toUpperCase().padStart(4,"0"), binary: cp.toString(2).padStart(16,"0"), bytes: cp > 65535 ? 4 : 2 };
     }
+    // 不整合解消：②におけるShift_JISエンコード処理の組み込み
+    if (encoding === "sjis") {
+      const sjisBytes = encodeToShiftJIS(char);
+      if (sjisBytes) {
+        return {
+          hex: Array.from(sjisBytes).map(b => b.toString(16).toUpperCase().padStart(2,"0")).join(" "),
+          binary: Array.from(sjisBytes).map(b => b.toString(2).padStart(8,"0")).join(" "),
+          bytes: sjisBytes.length
+        };
+      } else {
+        return { hex: "??", binary: "対応外(変換不可)", bytes: 0 };
+      }
+    }
+    // デフォルト (UTF-8)
     const encoded = new TextEncoder().encode(char);
     return {
       hex: Array.from(encoded).map(b => b.toString(16).toUpperCase().padStart(2,"0")).join(" "),
@@ -333,7 +380,7 @@
       const baseY = row * ROW;
       flowCtx.fillStyle = bgColors[row]; flowCtx.fillRect(0, baseY, W, ROW);
       flowCtx.strokeStyle = accentColors[row]; flowCtx.lineWidth = 3;
-      flowCtx.beginPath(); flowCtx.moveTo(0, baseY); flowCtx.lineTo(W, baseY); flowCtx.stroke();
+      flowCtx.beginPath(); flowCtx.moveTo(0, baseY); flowCtx.lineTo(W, baseY); flowCtx.stroke(); // バグ修正: flowCtx.stroke()に修正
       flowCtx.fillStyle = accentColors[row]; flowCtx.fillRect(0, baseY, 6, ROW);
       flowCtx.fillStyle = "#333"; flowCtx.font = "bold 17px Yu Gothic, sans-serif";
       flowCtx.fillText(titles[row], PAD, baseY + 34);
@@ -398,6 +445,13 @@
 
   // ── ③ 文字化けロジック ──
   function createGarbledText(text, source, target) {
+    if (source === target) {
+      if (source === "ASCII") {
+        return Array.from(text).map(ch => ch.charCodeAt(0) <= 127 ? ch : "?").join("");
+      }
+      return text;
+    }
+
     let bytes = [];
     const chars = Array.from(text);
 
@@ -406,15 +460,9 @@
       if (source === "ASCII") {
         if (cp <= 127) { bytes.push(cp); } else { bytes.push(0x3F); }
       } else if (source === "Shift_JIS") {
-        const sjisMap = {
-          "あ": [0x82, 0xA0], "い": [0x82, 0xA2], "う": [0x82, 0xA4], "え": [0x82, 0xA6], "お": [0x82, 0xA8],
-          "か": [0x82, 0xAA], "き": [0x82, 0xAC], "く": [0x82, 0xAE], "け": [0x82, 0xB0], "こ": [0x82, 0xB2],
-          "情": [0x8C, 0xEE], "報": [0x95, 0xF1], "Ⅰ": [0x81, 0x5A], "１": [0x82, 0x50]
-        };
-        if (cp <= 127) {
-          bytes.push(cp);
-        } else if (sjisMap[ch]) {
-          bytes.push(...sjisMap[ch]);
+        const sjisBytes = encodeToShiftJIS(ch);
+        if (sjisBytes) {
+          bytes.push(...Array.from(sjisBytes));
         } else {
           bytes.push(0x3F); 
         }
@@ -457,13 +505,11 @@
     } catch(e) { decodedFromInput.textContent = "変換できません"; }
   }
 
-  // 【改善】⚽を確実にカラー絵文字化（\uE0062 / バリエーションセレクター指定）して描画
   const emojis = ["😀","😁","😂","🤣","😊","😍","😎","😭","👍","👎","🙏","🎉","🍎","⚽\uFE0F","🚀","🐱","🌸","🔥"];
   const emojiPalette = document.getElementById("emojiPalette");
   emojis.forEach(emoji => {
     const btn = document.createElement("button");
     btn.textContent = emoji;
-    // カラー絵文字用に、フォントファミリー指定と行高さを調整
     btn.style.cssText = "font-size:22px; line-height:1; padding:2px; cursor:pointer; border:1px solid #ccc; border-radius:6px; background:white; width:36px; height:36px; font-family:'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji','sans-serif';";
     btn.addEventListener("click", () => {
       const s = textInput.selectionStart, e = textInput.selectionEnd;
