@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>画像のデジタル化 - 発展学習ワークシート</title>
+  <style>
+    body { font-family: "Yu Gothic", sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; }
+    .container { max-width: 800px; margin: auto; }
+    h1 { text-align: center; margin-bottom: 20px; color: #1565c0; }
+    .panel { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .panel h2 { margin-top: 0; border-bottom: 2px solid #4a90e2; padding-bottom: 8px; color: #2c3e9e; }
+
+    /* 基本問題用のスタイル（青系） */
+    .question-block { background: #f0f7ff; border-left: 4px solid #4a90e2; padding: 16px 18px; border-radius: 8px; margin-bottom: 16px; }
+
+    /* 考えてみよう用のスタイル（オレンジ系） */
+    .question-block-dev { background: #fff4e8; border-left: 4px solid #ff9800; padding: 16px 18px; border-radius: 8px; margin-bottom: 16px; }
+
+    .question-title { font-weight: bold; margin-bottom: 8px; font-size: 16px; line-height: 1.5; }
+
+    details { margin-top: 10px; }
+    summary { cursor: pointer; font-size: 14px; font-weight: bold; user-select: none; margin-right: 12px; display: inline-block; }
+
+    .sum-blue { color: #4a90e2; }
+    .sum-blue:hover { color: #1565c0; }
+    .sum-orange { color: #e67e22; }
+    .sum-orange:hover { color: #d35400; }
+
+    .answer-box { margin-top: 8px; font-size: 14px; background: #ffffff; padding: 12px 16px; border-radius: 6px; border: 1px solid #ddd; line-height: 1.6; }
+    .highlight { color: #d32f2f; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>画像のデジタル化<br><span style="font-size: 18px; color: #555;">発展学習ワークシート</span></h1>
+
+  <!-- ① 基本問題 -->
+  <div class="panel">
+    <h2>① 基本問題（大学入学共通テスト対策）</h2>
+    <p style="margin:0 0 16px; color:#666;">これまでに学んだ内容を確認しましょう。大学入学共通テスト「情報Ⅰ」のレベルを想定しています。「▶ 答えを確認する」を押すと、正解と解説が表示されます。</p>
+
+    <div style="display:flex; flex-direction:column; gap:6px;">
+
+      <div class="question-block">
+        <div class="question-title">問1　画像のデジタル化における「標本化（サンプリング）」とは、どのような処理か、簡潔に説明しなさい。</div>
+        <details>
+          <summary class="sum-blue">▶ 答えを確認する</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">連続的なアナログ画像を一定の間隔で区切り、格子状の点（ピクセル）に分割する処理</span></strong>
+            <p style="margin: 6px 0 0; color: #555; font-size: 13px;">【解説】標本化はデジタル化の最初のステップであり、なめらかに連続しているアナログの情報を、一定の間隔で区切って飛び飛びの値（ピクセル）として取り出す処理のこと。この後、量子化（値を段階的な数値に変換）、符号化（0と1の並びに変換）が続く。</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block">
+        <div class="question-title">問2　16×16ピクセルのグレースケール（256階調）画像のデータ量は何バイトになるか、計算過程とともに答えなさい。</div>
+        <details>
+          <summary class="sum-blue">▶ 答えを確認する</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">256バイト</span></strong>
+            <p style="margin: 6px 0 0; color: #555; font-size: 13px;">【解説】256階調は8bitで表現できる。総ビット数 ＝ 16×16×8 ＝ 2,048bit。バイトに変換すると 2,048 ÷ 8 ＝ 256バイト となる。</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block">
+        <div class="question-title">問3　解像度が 64×48 ピクセルの画像において、総ピクセル数はいくつになるか答えなさい。</div>
+        <details>
+          <summary class="sum-blue">▶ 答えを確認する</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">3,072ピクセル</span></strong>
+            <p style="margin: 6px 0 0; color: #555; font-size: 13px;">【解説】総ピクセル数は「横のピクセル数 × 縦のピクセル数」で求められる。64 × 48 ＝ 3,072ピクセル となる。</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block">
+        <div class="question-title">問4　量子化のビット数を1bit増やすと、1ピクセルあたりに表現できる色の段階数は何倍になるか答えなさい。</div>
+        <details>
+          <summary class="sum-blue">▶ 答えを確認する</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">2倍</span></strong>
+            <p style="margin: 6px 0 0; color: #555; font-size: 13px;">【解説】nビットで表現できる段階数は2のn乗通り。ビット数が1増えると段階数は2の(n+1)乗となり、これは2のn乗の2倍にあたる。したがって1bit増えるごとに表現できる段階数は2倍になる。</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block">
+        <div class="question-title">問5　モノクロ（白黒2値）画像の1ピクセルあたりのデータ量は何bitか。また、なぜその値になるのか説明しなさい。</div>
+        <details>
+          <summary class="sum-blue">▶ 答えを確認する</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">1bit</span></strong>
+            <p style="margin: 6px 0 0; color: #555; font-size: 13px;">【解説】モノクロ画像は「白」か「黒」かの2状態しか表現する必要がない。1bitで表せる状態は2の1乗＝2通りなので、1bitあれば十分に表現できるため。</p>
+          </div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ② 考えてみよう -->
+  <div class="panel">
+    <h2>② 考えてみよう（発展）</h2>
+    <p style="margin:0 0 16px; color:#666;">得られた知識を応用して、少し複雑な仕組みや計算について考察してみましょう。</p>
+
+    <div style="display:flex; flex-direction:column; gap:6px;">
+
+      <div class="question-block-dev">
+        <div class="question-title">問1　解像度が 32 × 32 ピクセル・フルカラー（24bit）の画像のデータ量は何バイトか。また、解像度を 64 × 64 ピクセルに変えるとデータ量は何倍になるか答えなさい。</div>
+
+        <details style="display:inline-block; margin-right:10px;">
+          <summary class="sum-orange">💡 ヒントを見る</summary>
+          <div class="answer-box" style="border-color: #ffe0b2;">
+            まず総ビット数（横×縦×1ピクセルの情報量）を計算し、8で割ってバイトに変換しましょう。解像度が2倍になるとき、縦と横の両方が2倍になる点に注意しましょう。
+          </div>
+        </details>
+
+        <details style="display:inline-block;">
+          <summary class="sum-orange">▶ 解答・解説</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">3,072バイト／4倍</span></strong>
+            <p style="margin: 6px 0 0; color: #555; font-size: 13px;">【解説】総ビット数 ＝ 32×32×24 ＝ 24,576bit。バイトに変換すると 24,576 ÷ 8 ＝ 3,072バイト。解像度を64×64にすると、縦・横それぞれが2倍になるため、ピクセル数（面積）は2×2＝4倍になり、データ量も4倍（12,288バイト）になる。</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block-dev">
+        <div class="question-title">問2　モノクロ（白黒2値）画像では、1ピクセルあたり何ビット使うか。フルカラーと比べてデータ量は何分の1になるか答えなさい。</div>
+
+        <details style="display:inline-block; margin-right:10px;">
+          <summary class="sum-orange">💡 ヒントを見る</summary>
+          <div class="answer-box" style="border-color: #ffe0b2;">
+            フルカラーは1ピクセルあたり何ビット必要だったか思い出しましょう（R・G・Bそれぞれ8bit）。
+          </div>
+        </details>
+
+        <details style="display:inline-block;">
+          <summary class="sum-orange">▶ 解答・解説</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">1bit／24分の1</span></strong>
+            <p style="margin: 6px 0 0; color: #555; font-size: 13px;">【解説】モノクロは1ピクセルあたり1bit、フルカラーは1ピクセルあたり24bit。同じ解像度であれば、モノクロのデータ量はフルカラーの 1 ÷ 24 ＝ 24分の1 になる。</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block-dev">
+        <div class="question-title">問3　フルカラーで1ピクセルあたり24bitを使う理由を、R・G・Bそれぞれが8bitであることと関連させて説明しなさい。また、8bitで表現できる階調数（段階数）を答えなさい。</div>
+
+        <details style="display:inline-block; margin-right:10px;">
+          <summary class="sum-orange">💡 ヒントを見る</summary>
+          <div class="answer-box" style="border-color: #ffe0b2;">
+            「色のデジタル化」の単元で学んだ、RGB各色が何bitで表現されていたかを思い出しましょう。
+          </div>
+        </details>
+
+        <details style="display:inline-block;">
+          <summary class="sum-orange">▶ 解答・解説</summary>
+          <div class="answer-box">
+            <strong>解答例：</strong><br>
+            フルカラーでは、光の3原色であるR（赤）・G（緑）・B（青）をそれぞれ8bit（256階調）で表現する。この3チャネル分を合計すると 8bit × 3 ＝ 24bit となるため、1ピクセルあたり24bitが必要になる。なお、8bitで表現できる階調数は<strong>2の8乗＝256段階</strong>である。
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block-dev">
+        <div class="question-title">問4　1920 × 1080ピクセル・フルカラーの画像を30枚/秒で表示する動画を1分間記録する場合、非圧縮のデータ量は何GBになるか。計算過程も示し、小数第2位を四捨五入して小数第1位まで答えなさい。</div>
+
+        <details style="display:inline-block; margin-right:10px;">
+          <summary class="sum-orange">💡 ヒントを見る</summary>
+          <div class="answer-box" style="border-color: #ffe0b2;">
+            まず1フレーム（静止画1枚）あたりのデータ量を求めます。次に「1秒あたりの枚数」と「秒数（60秒）」をかけて全体のビット数を求め、最後にbit→byte→GBの順に変換しましょう。GBに変換した後、小数第2位を四捨五入するのを忘れずに。
+          </div>
+        </details>
+
+        <details style="display:inline-block;">
+          <summary class="sum-orange">▶ 解答・解説</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">約11.2GB</span></strong>
+            <p style="margin: 6px 0 0; color: #555; font-size: 13px;">【解説】<br>
+            ① 1フレームのビット数　＝ 1920 × 1080 × 24 ＝ 49,766,400 bit<br>
+            ② 1秒あたりのビット数　＝ 49,766,400 × 30枚 ＝ 1,492,992,000 bit<br>
+            ③ 1分（60秒）分のビット数　＝ 1,492,992,000 × 60 ＝ 89,579,520,000 bit<br>
+            ④ バイトに変換　＝ 89,579,520,000 ÷ 8 ＝ 11,197,440,000 byte<br>
+            ⑤ GBに変換（1GB＝10の9乗byte）　＝ 11,197,440,000 ÷ 10の9乗 ＝ 11.19744GB<br>
+            ⑥ 小数第2位を四捨五入　＝ <strong>約11.2GB</strong></p>
+          </div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

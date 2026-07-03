@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>色のデジタル化（カラーコード）体験</title>
+  <style>
+    body { font-family: "Yu Gothic", sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; }
+    .container { max-width: 1100px; margin: auto; }
+    h1 { text-align: center; }
+    .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .panel h2 { margin-top: 0; }
+    label { font-weight: bold; display: block; margin-bottom: 6px; }
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 10px;
+      border-radius: 5px;
+      border: 1px solid #999;
+      background: #e0e0e0;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #666;
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #666;
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-track {
+      height: 10px;
+      border-radius: 5px;
+      background: transparent;
+    }
+    .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 16px; }
+    .info-box { background: #eef5ff; padding: 14px 18px; border-radius: 10px; margin-top: 12px; }
+    .try-box { background: #e8f5e9; padding: 14px 18px; border-radius: 10px; margin-top: 10px; }
+    .question { background: #fff4e8; border-left: 5px solid #ff9800; padding: 15px; border-radius: 8px; }
+    canvas { border: 1px solid #ddd; border-radius: 8px; }
+    input[type="number"] { width: 100%; padding: 8px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; margin-top: 4px; }
+    button { padding: 10px 20px; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; background: #4a90e2; color: white; }
+    button:hover { opacity: 0.9; }
+    .color-swatch { width: 100%; height: 120px; border-radius: 10px; border: 1px solid #ccc; transition: background 0.2s; }
+    .hex-display { font-family: monospace; font-size: 24px; font-weight: bold; text-align: center; padding: 10px; border-radius: 8px; margin-top: 10px; border: 2px solid #ddd; }
+    .binary-row { font-family: monospace; font-size: 13px; padding: 6px 10px; border-radius: 6px; margin: 3px 0; }
+    @media (max-width: 700px) { .two-col, .three-col { grid-template-columns: 1fr !important; } }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>色のデジタル化（カラーコード）を体験しよう</h1>
+
+  <!-- 学習の目的 -->
+  <div class="panel" style="background:#fffde7; border-left:6px solid #f9a825;">
+    <h2 style="color:#f57f17; margin-top:0;">🎯 このコンテンツで学ぶこと</h2>
+    <p style="margin:0 0 10px;">コンピュータは色を<strong>R（赤）・G（緑）・B（青）</strong>の3つの数値の組み合わせで表現します。</p>
+    <p style="margin:0 0 10px;">このコンテンツでは、次のことを体験的に学びます。</p>
+    <ul style="margin:0; padding-left:20px;">
+      <li>光の3原色と色の3原色の<strong>違い</strong>を理解する</li>
+      <li><strong>RGB値</strong>を変えると色がどう変わるか、規則性を発見する</li>
+      <li>フルカラー・グレースケール・モノクロなど<strong>色の表現方式</strong>の違いを理解する</li>
+      <li>色が<strong>16進数（カラーコード）</strong>でどのように表現されるか理解する</li>
+    </ul>
+  </div>
+
+  <!-- ① 光の3原色と色の3原色 -->
+  <div class="panel">
+    <h2>① 光の3原色と色の3原色</h2>
+    <p style="margin:0 0 16px; color:#555;">色の表現には2つの方式があります。ディスプレイとプリンタでは異なる方式が使われています。</p>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;" class="two-col">
+
+      <!-- 光の3原色 -->
+      <div style="background:#f0f4ff; border-radius:12px; padding:18px;">
+        <h3 style="margin:0 0 8px; color:#2c3e9e;">💡 光の3原色（加法混色）</h3>
+        <p style="margin:0 0 12px; font-size:14px;">赤・緑・青の<strong>光</strong>を混ぜて色を作ります。混ぜるほど<strong>明るく</strong>なり、すべて混ぜると<strong>白</strong>になります。ディスプレイで使われます。</p>
+        <canvas id="additiveCanvas" width="260" height="220" style="width:100%; background:#111; border-radius:8px;"></canvas>
+        <div style="margin-top:10px; font-size:13px; color:#555; text-align:center;">赤＋緑＝黄　／　赤＋青＝マゼンタ　／　緑＋青＝シアン　／　全部＝白</div>
+      </div>
+
+      <!-- 色の3原色 -->
+      <div style="background:#fff4f0; border-radius:12px; padding:18px;">
+        <h3 style="margin:0 0 8px; color:#9e2c2c;">🖨 色の3原色（減法混色）</h3>
+        <p style="margin:0 0 12px; font-size:14px;">シアン・マゼンタ・イエローの<strong>色材（インク）</strong>を混ぜて色を作ります。混ぜるほど<strong>暗く</strong>なり、すべて混ぜると<strong>黒</strong>に近くなります。プリンタで使われます。</p>
+        <canvas id="subtractiveCanvas" width="260" height="220" style="width:100%; background:#fff; border-radius:8px;"></canvas>
+        <div style="margin-top:10px; font-size:13px; color:#555; text-align:center;">シアン＋マゼンタ＝青　／　シアン＋イエロー＝緑　／　マゼンタ＋イエロー＝赤　／　全部＝黒</div>
+      </div>
+    </div>
+
+    <!-- 比較表 -->
+    <h3 style="margin:20px 0 10px;">比較まとめ</h3>
+    <table style="width:100%; border-collapse:collapse; font-size:14px;">
+      <thead>
+        <tr style="background:#4a90e2; color:white;">
+          <th style="padding:10px;"></th>
+          <th style="padding:10px; text-align:center;">光の3原色</th>
+          <th style="padding:10px; text-align:center;">色の3原色</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:10px; border-bottom:1px solid #ddd; font-weight:bold;">方式</td><td style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">加法混色</td><td style="padding:10px; border-bottom:1px solid #ddd; text-align:center; background:#fff4f0;">減法混色</td></tr>
+        <tr style="background:#f0f7ff;"><td style="padding:10px; border-bottom:1px solid #ddd; font-weight:bold;">3原色</td><td style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">赤・緑・青（RGB）</td><td style="padding:10px; border-bottom:1px solid #ddd; text-align:center; background:#fff4f0;">シアン・マゼンタ・イエロー（CMY）</td></tr>
+        <tr><td style="padding:10px; border-bottom:1px solid #ddd; font-weight:bold;">全部混ぜると</td><td style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">白</td><td style="padding:10px; border-bottom:1px solid #ddd; text-align:center; background:#fff4f0;">黒（に近い色）</td></tr>
+        <tr style="background:#f0f7ff;"><td style="padding:10px; font-weight:bold;">使用例</td><td style="padding:10px; text-align:center;">ディスプレイ・テレビ・スマートフォン</td><td style="padding:10px; text-align:center; background:#fff4f0;">カラープリンタ・印刷物</td></tr>
+      </tbody>
+    </table>
+
+    <div style="background:#f3e5f5; border-left:4px solid #8e44ad; padding:14px 18px; border-radius:8px; margin-top:16px;">
+      <strong style="color:#8e44ad;">💡 パソコン表示と印刷物で色合いが違って見えるのはなぜ？</strong>
+      <p style="margin:8px 0 0;">ディスプレイは<strong>光（加法混色）</strong>で色を表現するため、鮮やかで明るい色を表示できます。一方、プリンタは<strong>インク（減法混色）</strong>で色を表現するため、表現できる色の範囲（色域）がディスプレイより狭くなります。特に鮮やかな青・赤・緑はインクでは完全に再現できず、くすんで見えることがあります。この違いを「色域の差」といい、デザイン・印刷の現場では画面と印刷の差を調整する作業（カラーマネジメント）が必要になります。</p>
+    </div>
+  </div>
+
+  <!-- ② RGB値を操作して規則性を発見しよう -->
+  <div class="panel">
+    <h2>② RGB値を操作して規則性を発見しよう</h2>
+    <p style="margin:0 0 6px; color:#555;">スライダーを動かしながら、下の課題に順番に取り組もう。</p>
+    <div class="controls-grid">
+      <div>
+        <label style="color:#c0392b;">R（赤）: <span id="rValue">128</span></label>
+        <input type="range" id="rSlider" min="0" max="255" value="128" style="accent-color:#e74c3c;">
+      </div>
+      <div>
+        <label style="color:#27ae60;">G（緑）: <span id="gValue">64</span></label>
+        <input type="range" id="gSlider" min="0" max="255" value="64" style="accent-color:#2ecc71;">
+      </div>
+      <div>
+        <label style="color:#2980b9;">B（青）: <span id="bValue">200</span></label>
+        <input type="range" id="bSlider" min="0" max="255" value="200" style="accent-color:#3498db;">
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;" class="two-col">
+      <div>
+        <div class="color-swatch" id="colorSwatch"></div>
+        <div class="hex-display" id="hexDisplay">#8040C8</div>
+      </div>
+      <div>
+        <div style="margin-bottom:8px; font-weight:bold; font-size:14px;">数値表現</div>
+        <div class="binary-row" style="background:#ffeaea;">
+          <span style="color:#c0392b;">R</span>: <span id="rDec" style="display:inline-block;width:3ch;text-align:right;">128</span>（10進）＝
+          <span style="color:#c0392b;" id="rHex">80</span>（16進）＝ <span id="rBin">10000000</span>（2進）
+        </div>
+        <div class="binary-row" style="background:#eafaea;">
+          <span style="color:#27ae60;">G</span>: <span id="gDec" style="display:inline-block;width:3ch;text-align:right;">64</span>（10進）＝
+          <span style="color:#27ae60;" id="gHex">40</span>（16進）＝ <span id="gBin">01000000</span>（2進）
+        </div>
+        <div class="binary-row" style="background:#eaebff;">
+          <span style="color:#2980b9;">B</span>: <span id="bDec" style="display:inline-block;width:3ch;text-align:right;">200</span>（10進）＝
+          <span style="color:#2980b9;" id="bHex">C8</span>（16進）＝ <span id="bBin">11001000</span>（2進）
+        </div>
+        <div class="binary-row" style="background:#f5f5f5; margin-top:8px;">
+          合計: <strong>24 bit</strong>（8bit × 3）＝ 約<strong>1677万</strong>色を表現可能
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box"><p id="colorDescription" style="margin:0;"></p></div>
+
+    <div style="margin-top:16px;">
+      <strong>📋 発見課題：順番に操作して、規則性を見つけよう</strong>
+      <div id="discoverySteps" style="margin-top:10px; display:flex; flex-direction:column; gap:10px;"></div>
+    </div>
+  </div>
+
+  <!-- ③ デジタル化の流れ -->
+  <div class="panel">
+    <h2>③ デジタル化の流れ</h2>
+    <p style="margin:0 0 12px; color:#555;">色がデジタルデータになるまでの3つのステップを見てみよう。スライダーを動かすと図が変わります。</p>
+    <div class="controls-grid">
+      <div>
+        <label style="color:#c0392b;">R（赤）: <span id="frValue">128</span></label>
+        <input type="range" id="frSlider" min="0" max="255" value="128" style="accent-color:#e74c3c;">
+      </div>
+      <div>
+        <label style="color:#27ae60;">G（緑）: <span id="fgValue">64</span></label>
+        <input type="range" id="fgSlider" min="0" max="255" value="64" style="accent-color:#2ecc71;">
+      </div>
+      <div>
+        <label style="color:#2980b9;">B（青）: <span id="fbValue">200</span></label>
+        <input type="range" id="fbSlider" min="0" max="255" value="200" style="accent-color:#3498db;">
+      </div>
+    </div>
+    <canvas id="flowCanvas" width="1000" height="540" style="width:100%; margin-top:12px;"></canvas>
+  </div>
+
+  <!-- ④ カラーコードを調べよう -->
+  <div class="panel">
+    <h2>④ カラーコードを調べよう</h2>
+    <p style="margin:0 0 14px; color:#555;">16進数のカラーコード（例：#FF8800）を入力すると、RGB値に変換します。また、よく使われる色の一覧を確認しよう。</p>
+
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
+      <div>
+        <label style="font-size:14px;">カラーコードを入力（#を含む6桁）</label>
+        <input type="text" id="hexInput" value="#FF8800" maxlength="7"
+          style="padding:8px; font-size:18px; font-family:monospace; border:2px solid #ccc; border-radius:6px; width:160px; margin-top:4px;">
+      </div>
+      <div style="margin-top:24px;"><button id="hexDecodeBtn">変換する</button></div>
+      <div id="hexDecodeResult" style="margin-top:24px; font-size:14px; display:none;">
+        <div id="hexDecodeSwatch" style="width:80px; height:50px; border-radius:8px; border:1px solid #ccc; display:inline-block; vertical-align:middle; margin-right:12px;"></div>
+        <span id="hexDecodeText"></span>
+      </div>
+    </div>
+
+    <!-- ④専用スライダー -->
+    <h3 style="margin:16px 0 10px;">スライダーでカラーコードを作る</h3>
+    <div class="controls-grid">
+      <div>
+        <label style="color:#c0392b;">R（赤）: <span id="hrValue">255</span></label>
+        <input type="range" id="hrSlider" min="0" max="255" value="255" style="accent-color:#e74c3c;">
+      </div>
+      <div>
+        <label style="color:#27ae60;">G（緑）: <span id="hgValue">136</span></label>
+        <input type="range" id="hgSlider" min="0" max="255" value="136" style="accent-color:#2ecc71;">
+      </div>
+      <div>
+        <label style="color:#2980b9;">B（青）: <span id="hbValue">0</span></label>
+        <input type="range" id="hbSlider" min="0" max="255" value="0" style="accent-color:#3498db;">
+      </div>
+    </div>
+    <div style="display:flex; gap:16px; align-items:center; margin-top:10px; flex-wrap:wrap;">
+      <div id="hexColorSwatch" style="width:80px; height:50px; border-radius:8px; border:1px solid #ccc; background:#FF8800;"></div>
+      <div id="hexColorCode" style="font-family:monospace; font-size:22px; font-weight:bold; color:#333;">#FF8800</div>
+    </div>
+
+    <h3 style="margin:20px 0 10px;">よく使われる色のカラーコード</h3>
+    <div id="colorPalette" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+  </div>
+
+  <!-- ⑤ 色あてクイズ -->
+  <div class="panel">
+    <h2>⑤ 色あてクイズ</h2>
+    <p style="margin:0 0 14px; color:#555;">表示された色を、スライダーでできるだけ正確に再現してみよう。100点満点で採点します。</p>
+    <div class="controls-grid">
+      <div>
+        <label style="color:#c0392b;">R（赤）: <span id="qrValue">0</span></label>
+        <input type="range" id="qrSlider" min="0" max="255" value="0" style="accent-color:#e74c3c;">
+      </div>
+      <div>
+        <label style="color:#27ae60;">G（緑）: <span id="qgValue">0</span></label>
+        <input type="range" id="qgSlider" min="0" max="255" value="0" style="accent-color:#2ecc71;">
+      </div>
+      <div>
+        <label style="color:#2980b9;">B（青）: <span id="qbValue">0</span></label>
+        <input type="range" id="qbSlider" min="0" max="255" value="0" style="accent-color:#3498db;">
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px;" class="three-col">
+      <div style="text-align:center;">
+        <div style="font-weight:bold; margin-bottom:8px;">目標の色</div>
+        <div id="quizTarget" style="height:140px; border-radius:10px; border:2px solid #ccc;"></div>
+        <div id="quizTargetHex" style="font-family:monospace; font-size:16px; margin-top:8px; color:#666;">???</div>
+        <button id="quizNewBtn" style="margin-top:10px; background:#e67e22; width:100%;">🎲 色を更新</button>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-weight:bold; margin-bottom:8px;">あなたの色</div>
+        <div id="quizMySwatch" style="height:140px; border-radius:10px; border:2px solid #ccc;"></div>
+        <div id="quizMyHex" style="font-family:monospace; font-size:16px; margin-top:8px; color:#666;">#000000</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-weight:bold; margin-bottom:8px;">採点結果</div>
+        <div id="quizScoreBox" style="height:140px; border-radius:10px; border:2px solid #ccc; background:#f8f8f8; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <div style="font-size:13px; color:#aaa;">答え合わせを押してください</div>
+        </div>
+        <button id="quizCheckBtn" style="margin-top:10px; background:#27ae60; width:100%;">✅ 答え合わせ</button>
+      </div>
+    </div>
+    <div id="quizFeedback" style="display:none; margin-top:14px;" class="info-box"></div>
+  </div>
+
+  <!-- ⑥ 色の表現方式 -->
+  <div class="panel">
+    <h2>⑥ 色の表現方式</h2>
+    <p style="margin:0 0 16px; color:#555;">同じ画像でも、色の表現方式によって見え方とデータ量が異なります。</p>
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;" class="three-col">
+
+      <div style="background:#fff3e0; border:2px solid #e67e22; border-radius:10px; padding:16px; text-align:center;">
+        <h3 style="margin:0 0 8px; color:#e67e22;">🌈 フルカラー</h3>
+        <canvas id="fullColorCanvas" width="200" height="160" style="width:100%; border-radius:6px;"></canvas>
+        <div style="margin-top:10px; font-size:13px; text-align:left; line-height:1.8;">
+          <div><strong>1ピクセル:</strong> 24 bit（R・G・B 各8bit）</div>
+          <div><strong>表現できる色数:</strong> 約1677万色</div>
+          <div><strong>用途:</strong> 写真・ウェブ・デジタルコンテンツ</div>
+        </div>
+      </div>
+
+      <div style="background:#f0f0f0; border:2px solid #888; border-radius:10px; padding:16px; text-align:center;">
+        <h3 style="margin:0 0 8px; color:#555;">🌫 グレースケール</h3>
+        <canvas id="grayCanvas" width="200" height="160" style="width:100%; border-radius:6px;"></canvas>
+        <div style="margin-top:10px; font-size:13px; text-align:left; line-height:1.8;">
+          <div><strong>1ピクセル:</strong> 8 bit（明度のみ）</div>
+          <div><strong>表現できる色数:</strong> 256段階</div>
+          <div><strong>用途:</strong> 文書スキャン・白黒写真</div>
+        </div>
+      </div>
+
+      <div style="background:#f8f8f8; border:2px solid #333; border-radius:10px; padding:16px; text-align:center;">
+        <h3 style="margin:0 0 8px; color:#333;">⬛ モノクロ（2値）</h3>
+        <canvas id="monoCanvas" width="200" height="160" style="width:100%; border-radius:6px;"></canvas>
+        <div style="margin-top:10px; font-size:13px; text-align:left; line-height:1.8;">
+          <div><strong>1ピクセル:</strong> 1 bit（0か1のみ）</div>
+          <div><strong>表現できる色数:</strong> 2色（白・黒）</div>
+          <div><strong>用途:</strong> QRコード・FAX・白黒印刷</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box" style="margin-top:16px;">
+      <strong>データ量の比較（100×100ピクセルの場合）</strong>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:10px;" class="three-col">
+        <div style="text-align:center; background:#fff3e0; padding:10px; border-radius:8px;">フルカラー<br><strong>100×100×24÷8 = 30,000 B</strong></div>
+        <div style="text-align:center; background:#f0f0f0; padding:10px; border-radius:8px;">グレースケール<br><strong>100×100×8÷8 = 10,000 B</strong></div>
+        <div style="text-align:center; background:#f8f8f8; padding:10px; border-radius:8px;">モノクロ<br><strong>100×100×1÷8 = 1,250 B</strong></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function toHex(n) { return n.toString(16).toUpperCase().padStart(2, "0"); }
+  function toBin(n) { return n.toString(2).padStart(8, "0"); }
+
+  // ── ① 混色図の描画 ──
+  function drawAdditive() {
+    const canvas = document.getElementById("additiveCanvas");
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    const cx = W / 2, cy = H / 2 + 10, r = 72;
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#111"; ctx.fillRect(0, 0, W, H);
+
+    // 3つの円（加算合成）
+    const circles = [
+      { dx: 0,    dy: -r*0.55, color: "rgba(255,0,0,0.85)" },
+      { dx: -r*0.5, dy: r*0.3, color: "rgba(0,255,0,0.85)" },
+      { dx:  r*0.5, dy: r*0.3, color: "rgba(0,0,255,0.85)" },
+    ];
+    ctx.globalCompositeOperation = "lighter";
+    circles.forEach(c => {
+      ctx.beginPath();
+      ctx.arc(cx + c.dx, cy + c.dy, r, 0, Math.PI * 2);
+      ctx.fillStyle = c.color;
+      ctx.fill();
+    });
+    ctx.globalCompositeOperation = "source-over";
+
+    // ラベル
+    ctx.font = "bold 13px Yu Gothic, sans-serif";
+    ctx.fillStyle = "#ff6666"; ctx.textAlign = "center";
+    ctx.fillText("赤(R)", cx, cy - r * 1.1);
+    ctx.fillStyle = "#66ff66";
+    ctx.fillText("緑(G)", cx - r * 0.9, cy + r * 0.75);
+    ctx.fillStyle = "#6699ff";
+    ctx.fillText("青(B)", cx + r * 0.9, cy + r * 0.75);
+    ctx.textAlign = "left";
+  }
+
+  function drawSubtractive() {
+    const canvas = document.getElementById("subtractiveCanvas");
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    const cx = W / 2, cy = H / 2 + 10, r = 72;
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+
+    // 3つの円（減法混色：multiply合成）
+    const circles = [
+      { dx: 0,      dy: -r*0.55, color: "rgba(0,255,255,0.85)" },
+      { dx: -r*0.5, dy:  r*0.3,  color: "rgba(255,0,255,0.85)" },
+      { dx:  r*0.5, dy:  r*0.3,  color: "rgba(255,255,0,0.85)" },
+    ];
+    ctx.globalCompositeOperation = "multiply";
+    circles.forEach(c => {
+      ctx.beginPath();
+      ctx.arc(cx + c.dx, cy + c.dy, r, 0, Math.PI * 2);
+      ctx.fillStyle = c.color;
+      ctx.fill();
+    });
+    ctx.globalCompositeOperation = "source-over";
+
+    // ラベル
+    ctx.font = "bold 13px Yu Gothic, sans-serif";
+    ctx.fillStyle = "#007777"; ctx.textAlign = "center";
+    ctx.fillText("シアン(C)", cx, cy - r * 1.1);
+    ctx.fillStyle = "#990099";
+    ctx.fillText("マゼンタ(M)", cx - r * 1.0, cy + r * 0.75);
+    ctx.fillStyle = "#888800";
+    ctx.fillText("イエロー(Y)", cx + r * 1.0, cy + r * 0.75);
+    ctx.textAlign = "left";
+  }
+
+  // ── ③ 色の表現方式サンプル画像 ──
+  function drawColorModeSamples() {
+    const size = 200, h = 160;
+    [
+      { id: "fullColorCanvas",  mode: "full" },
+      { id: "grayCanvas",       mode: "gray" },
+      { id: "monoCanvas",       mode: "mono" },
+    ].forEach(({ id, mode }) => {
+      const canvas = document.getElementById(id);
+      canvas.width = size; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      const g = ctx.createLinearGradient(0, 0, size, h);
+      g.addColorStop(0, "#e74c3c"); g.addColorStop(0.5, "#f1c40f"); g.addColorStop(1, "#3498db");
+      ctx.fillStyle = g; ctx.fillRect(0, 0, size, h);
+      ctx.fillStyle = "white"; ctx.font = "bold 28px sans-serif"; ctx.fillText("情報Ⅰ", 40, 80);
+      ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(160, 40, 24, 0, Math.PI*2); ctx.fill();
+
+      if (mode === "gray" || mode === "mono") {
+        const id2 = ctx.getImageData(0, 0, size, h);
+        const d = id2.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const gray = Math.round(0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2]);
+          const v = mode === "mono" ? (gray > 127 ? 255 : 0) : gray;
+          d[i] = d[i+1] = d[i+2] = v;
+        }
+        ctx.putImageData(id2, 0, 0);
+      }
+    });
+  }
+
+  // ── ② RGB操作スライダー ──
+  const rSlider = document.getElementById("rSlider");
+  const gSlider = document.getElementById("gSlider");
+  const bSlider = document.getElementById("bSlider");
+
+  function updateColor() {
+    const r = parseInt(rSlider.value);
+    const g = parseInt(gSlider.value);
+    const b = parseInt(bSlider.value);
+    document.getElementById("rValue").textContent = r;
+    document.getElementById("gValue").textContent = g;
+    document.getElementById("bValue").textContent = b;
+
+    const hex = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    document.getElementById("colorSwatch").style.background = hex;
+    document.getElementById("hexDisplay").textContent = hex;
+    document.getElementById("hexDisplay").style.background = hex;
+    const bright = (r*299 + g*587 + b*114) / 1000;
+    document.getElementById("hexDisplay").style.color = bright > 128 ? "#333" : "#fff";
+
+    document.getElementById("rDec").textContent = r;
+    document.getElementById("gDec").textContent = g;
+    document.getElementById("bDec").textContent = b;
+    document.getElementById("rHex").textContent = toHex(r);
+    document.getElementById("gHex").textContent = toHex(g);
+    document.getElementById("bHex").textContent = toHex(b);
+    document.getElementById("rBin").textContent = toBin(r);
+    document.getElementById("gBin").textContent = toBin(g);
+    document.getElementById("bBin").textContent = toBin(b);
+
+    let desc = `現在の色：<strong style="color:${hex}; text-shadow:0 0 2px #999;">■</strong> ${hex}　`;
+    if (r===g && g===b) {
+      if (r===255) desc += "白（R・G・Bがすべて最大値）";
+      else if (r===0) desc += "黒（R・G・Bがすべて0）";
+      else desc += "グレー（R・G・Bが等しいと無彩色になる）";
+    } else {
+      const dominant = r>=g && r>=b ? "赤" : g>=r && g>=b ? "緑" : "青";
+      desc += `${dominant}系の色`;
+    }
+    document.getElementById("colorDescription").innerHTML = desc;
+    checkDiscoverySteps(r, g, b);
+  }
+
+  rSlider.addEventListener("input", updateColor);
+  gSlider.addEventListener("input", updateColor);
+  bSlider.addEventListener("input", updateColor);
+
+  // ── 発見課題（5ステップ） ──
+  const steps = [
+    { inst: "R・G・Bをすべて <strong>0</strong> にしてみよう。", hint: "すべての光が消えた状態です。", check: (r,g,b)=>r===0&&g===0&&b===0, disc: "💡 R=G=B=0 → <strong>黒</strong>（光がない状態）" },
+    { inst: "R・G・Bをすべて <strong>255</strong> にしてみよう。", hint: "すべての光が最大の状態です。", check: (r,g,b)=>r===255&&g===255&&b===255, disc: "💡 R=G=B=255 → <strong>白</strong>（すべての光が最大）" },
+    { inst: "R・G・Bをすべて <strong>同じ値</strong>（0でも255でもない）にしてみよう。", hint: "例えばR=G=B=128など。", check: (r,g,b)=>r===g&&g===b&&r!==0&&r!==255, disc: "💡 R=G=B（中間値）→ <strong>グレー</strong>（3チャネルが等しいと無彩色になる）" },
+    { inst: "R だけを <strong>255</strong>、G と B を <strong>0</strong> にしてみよう。", hint: "赤の光だけを最大にします。", check: (r,g,b)=>r===255&&g===0&&b===0, disc: "💡 R=255, G=0, B=0 → <strong>純粋な赤</strong>（1チャネルだけが最大）" },
+    { inst: "R と G を <strong>255</strong>、B を <strong>0</strong> にしてみよう。", hint: "赤と緑の光を混ぜると…？", check: (r,g,b)=>r===255&&g===255&&b===0, disc: "💡 R=255, G=255, B=0 → <strong>黄</strong>（光の加法混色：赤＋緑＝黄）" },
+  ];
+  const stepsContainer = document.getElementById("discoverySteps");
+  steps.forEach((s, i) => {
+    const div = document.createElement("div");
+    div.id = `step-${i}`;
+    div.style.cssText = "padding:12px 16px; border-radius:8px; border:2px solid #ddd; background:#fafafa; transition:border-color 0.3s, background 0.3s;";
+    div.innerHTML = `<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span style="background:#4a90e2; color:white; border-radius:50%; width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-weight:bold; font-size:13px; flex-shrink:0;">${i+1}</span>
+      <span>${s.inst}</span><span style="font-size:12px; color:#999;">（ヒント：${s.hint}）</span>
+    </div>
+    <div id="sr-${i}" style="display:none; margin-top:8px; padding:8px 12px; border-radius:6px; background:#e8f5e9; color:#27ae60; font-size:14px;"></div>`;
+    stepsContainer.appendChild(div);
+  });
+  function checkDiscoverySteps(r, g, b) {
+    steps.forEach((s, i) => {
+      if (s.check(r, g, b)) {
+        document.getElementById(`step-${i}`).style.borderColor = "#27ae60";
+        document.getElementById(`step-${i}`).style.background = "#f0fff4";
+        const res = document.getElementById(`sr-${i}`);
+        res.style.display = "block"; res.innerHTML = s.disc;
+      }
+    });
+  }
+
+  // ── ④ 色あてクイズ（独立スライダー） ──
+  const qrSlider = document.getElementById("qrSlider");
+  const qgSlider = document.getElementById("qgSlider");
+  const qbSlider = document.getElementById("qbSlider");
+  let quizR = 0, quizG = 0, quizB = 0;
+
+  function updateQuizSwatch() {
+    const r = parseInt(qrSlider.value), g = parseInt(qgSlider.value), b = parseInt(qbSlider.value);
+    document.getElementById("qrValue").textContent = r;
+    document.getElementById("qgValue").textContent = g;
+    document.getElementById("qbValue").textContent = b;
+    const hex = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    document.getElementById("quizMySwatch").style.background = hex;
+    document.getElementById("quizMyHex").textContent = hex;
+  }
+  qrSlider.addEventListener("input", updateQuizSwatch);
+  qgSlider.addEventListener("input", updateQuizSwatch);
+  qbSlider.addEventListener("input", updateQuizSwatch);
+
+  function generateQuizColor() {
+    quizR = Math.floor(Math.random()*256);
+    quizG = Math.floor(Math.random()*256);
+    quizB = Math.floor(Math.random()*256);
+    document.getElementById("quizTarget").style.background = `#${toHex(quizR)}${toHex(quizG)}${toHex(quizB)}`;
+    document.getElementById("quizTargetHex").textContent = "???";
+    document.getElementById("quizFeedback").style.display = "none";
+    document.getElementById("quizScoreBox").style.background = "#f8f8f8";
+    document.getElementById("quizScoreBox").innerHTML = `<div style="font-size:13px; color:#aaa;">答え合わせを押してください</div>`;
+  }
+  document.getElementById("quizNewBtn").addEventListener("click", generateQuizColor);
+  document.getElementById("quizCheckBtn").addEventListener("click", () => {
+    const r = parseInt(qrSlider.value), g = parseInt(qgSlider.value), b = parseInt(qbSlider.value);
+    const dist = Math.abs(r-quizR) + Math.abs(g-quizG) + Math.abs(b-quizB);
+    const score = Math.max(0, Math.round((1 - dist/765)*100));
+    let sc, sm;
+    if (score>=95){sc="#27ae60";sm="🎉 ほぼ完璧！";}
+    else if(score>=80){sc="#2980b9";sm="👍 よくできました！";}
+    else if(score>=60){sc="#e67e22";sm="📝 もう少し！";}
+    else{sc="#c0392b";sm="🔄 もう一度挑戦！";}
+    document.getElementById("quizScoreBox").style.background = sc;
+    document.getElementById("quizScoreBox").innerHTML =
+      `<div style="color:white;font-size:48px;font-weight:bold;">${score}</div>` +
+      `<div style="color:white;font-size:18px;">点</div>` +
+      `<div style="color:white;font-size:14px;margin-top:4px;">${sm}</div>`;
+    const th = `#${toHex(quizR)}${toHex(quizG)}${toHex(quizB)}`;
+    document.getElementById("quizTargetHex").textContent = th;
+    const fb = document.getElementById("quizFeedback");
+    fb.style.display = "block";
+    fb.innerHTML = `<strong>正解:</strong> R=${quizR}, G=${quizG}, B=${quizB}（${th}）<br>` +
+      `<strong>あなたの答え:</strong> R=${r}, G=${g}, B=${b}（#${toHex(r)}${toHex(g)}${toHex(b)}）<br>` +
+      `<strong>差:</strong> ΔR=${Math.abs(r-quizR)}, ΔG=${Math.abs(g-quizG)}, ΔB=${Math.abs(b-quizB)}`;
+  });
+
+  // ── ⑤ デジタル化の流れ（独立スライダー） ──
+  const frSlider = document.getElementById("frSlider");
+  const fgSlider = document.getElementById("fgSlider");
+  const fbSlider = document.getElementById("fbSlider");
+
+  function updateFlow() {
+    const r = parseInt(frSlider.value), g = parseInt(fgSlider.value), b = parseInt(fbSlider.value);
+    document.getElementById("frValue").textContent = r;
+    document.getElementById("fgValue").textContent = g;
+    document.getElementById("fbValue").textContent = b;
+    drawFlow(r, g, b);
+  }
+  frSlider.addEventListener("input", updateFlow);
+  fgSlider.addEventListener("input", updateFlow);
+  fbSlider.addEventListener("input", updateFlow);
+
+  const flowCanvas = document.getElementById("flowCanvas");
+  const flowCtx = flowCanvas.getContext("2d");
+
+  function drawFlow(r, g, b) {
+    const W = flowCanvas.width, H = flowCanvas.height;
+    const ROW = H/3, TITLE_H = 50, PAD = 40, GRAPH_H = ROW - TITLE_H;
+    flowCtx.clearRect(0, 0, W, H);
+    const bgColors = ["#f0f7ff","#f0fff4","#fff8f0"];
+    const accentColors = ["#4a90e2","#27ae60","#e67e22"];
+    const titles = [
+      "① 標本化（Sampling）　　光の三原色（R・G・B）それぞれの強さを測定する",
+      "② 量子化（Quantization）　各チャネルの値をあらかじめ決まっている256段階にあてはめる",
+      "③ 符号化（Encoding）　　各値を8bitの2進数・16進数で表す"
+    ];
+    for (let row = 0; row < 3; row++) {
+      const baseY = row * ROW;
+      flowCtx.fillStyle = bgColors[row]; flowCtx.fillRect(0, baseY, W, ROW);
+      flowCtx.strokeStyle = accentColors[row]; flowCtx.lineWidth = 3;
+      flowCtx.beginPath(); flowCtx.moveTo(0, baseY); flowCtx.lineTo(W, baseY); flowCtx.stroke();
+      flowCtx.fillStyle = accentColors[row]; flowCtx.fillRect(0, baseY, 6, ROW);
+      flowCtx.fillStyle = "#333"; flowCtx.font = "bold 17px Yu Gothic, sans-serif";
+      flowCtx.fillText(titles[row], PAD, baseY + 34);
+    }
+    // 段①：バー
+    {
+      const baseY = 0, barW = 120, barH = GRAPH_H - 30, startY = baseY + TITLE_H + 10;
+      const chs = [{val:r,color:"#e74c3c",label:"R（赤）"},{val:g,color:"#2ecc71",label:"G（緑）"},{val:b,color:"#3498db",label:"B（青）"}];
+      const totalW = chs.length*(barW+30), startX = (W-totalW)/2;
+      chs.forEach((ch,i) => {
+        const x = startX+i*(barW+30), fillH = Math.round(barH*ch.val/255);
+        flowCtx.fillStyle = "#eee"; flowCtx.fillRect(x, startY, barW, barH);
+        flowCtx.fillStyle = ch.color; flowCtx.fillRect(x, startY+barH-fillH, barW, fillH);
+        flowCtx.strokeStyle = "#aaa"; flowCtx.lineWidth = 1; flowCtx.strokeRect(x, startY, barW, barH);
+        flowCtx.fillStyle = "#333"; flowCtx.font = "bold 15px Yu Gothic, sans-serif"; flowCtx.textAlign = "center";
+        flowCtx.fillText(ch.label, x+barW/2, startY+barH+20);
+        flowCtx.fillText(ch.val, x+barW/2, startY+barH-fillH-6>startY+6?startY+barH-fillH-6:startY+18);
+        flowCtx.textAlign = "left";
+      });
+    }
+    // 段②：グラデーションバー
+    {
+      const baseY = ROW, chs = [{val:r,color:"#e74c3c",label:"R"},{val:g,color:"#2ecc71",label:"G"},{val:b,color:"#3498db",label:"B"}];
+      const barW = Math.floor((W-PAD*2)/3)-20, barH = 30, startY = baseY+TITLE_H+16;
+      chs.forEach((ch,i) => {
+        const x = PAD+i*(barW+20);
+        const grad = flowCtx.createLinearGradient(x,0,x+barW,0);
+        grad.addColorStop(0,"#eee"); grad.addColorStop(1,ch.color);
+        flowCtx.fillStyle = grad; flowCtx.fillRect(x,startY,barW,barH);
+        flowCtx.strokeStyle = "#ccc"; flowCtx.lineWidth = 1; flowCtx.strokeRect(x,startY,barW,barH);
+        const mx = x+Math.round(barW*ch.val/255);
+        flowCtx.fillStyle = "#333"; flowCtx.fillRect(mx-2,startY-6,4,barH+12);
+        flowCtx.font = "bold 14px Yu Gothic, sans-serif"; flowCtx.textAlign = "center";
+        flowCtx.fillStyle = "#333";
+        flowCtx.fillText(`${ch.label}: ${ch.val} / 255段階`, x+barW/2, startY+barH+20);
+        flowCtx.font = "11px monospace"; flowCtx.fillStyle = "#888";
+        flowCtx.textAlign = "left"; flowCtx.fillText("0", x+2, startY+barH+14);
+        flowCtx.textAlign = "right"; flowCtx.fillText("255", x+barW-2, startY+barH+14);
+        flowCtx.textAlign = "left";
+      });
+    }
+    // 段③：符号化ブロック
+    {
+      const baseY = ROW*2;
+      const chs = [{val:r,color:"#e74c3c",bg:"#ffeaea",label:"R（赤）"},{val:g,color:"#27ae60",bg:"#eafaea",label:"G（緑）"},{val:b,color:"#2980b9",bg:"#eaebff",label:"B（青）"}];
+      const swatchW = 180;                                         // 右端のカラーコードスウォッチ幅
+      const swatchGap = 16;                                        // スウォッチとブロックの間隔
+      const availW = W - PAD*2 - swatchW - swatchGap;             // 3ブロックに使える幅
+      const colW = Math.floor(availW / 3) - 8;
+      const blockH = GRAPH_H - 20, startY = baseY + TITLE_H + 10;
+
+      chs.forEach((ch,i) => {
+        const x = PAD + i*(colW+8);
+        flowCtx.fillStyle = ch.bg; flowCtx.strokeStyle = ch.color; flowCtx.lineWidth = 2;
+        flowCtx.beginPath(); flowCtx.roundRect(x,startY,colW,blockH,8); flowCtx.fill(); flowCtx.stroke();
+        flowCtx.fillStyle = ch.color; flowCtx.font = "bold 15px Yu Gothic, sans-serif"; flowCtx.textAlign = "center";
+        flowCtx.fillText(ch.label, x+colW/2, startY+24);
+        flowCtx.fillStyle = "#555"; flowCtx.font = "13px Yu Gothic, sans-serif";
+        flowCtx.fillText(`10進数: ${ch.val}`, x+colW/2, startY+48);
+        flowCtx.fillStyle = ch.color; flowCtx.font = "bold 20px monospace";
+        flowCtx.fillText(toHex(ch.val), x+colW/2, startY+74);
+        const bin = toBin(ch.val);
+        flowCtx.fillStyle = "#444"; flowCtx.font = "bold 13px monospace";
+        flowCtx.fillText(bin.slice(0,4)+" "+bin.slice(4,8), x+colW/2, startY+100);
+        flowCtx.textAlign = "left";
+      });
+
+      // カラーコードスウォッチ（右端に独立配置）
+      const hex = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+      const sx = W - PAD - swatchW, sy = startY;
+      flowCtx.fillStyle = hex;
+      flowCtx.beginPath(); flowCtx.roundRect(sx,sy,swatchW,blockH,8); flowCtx.fill();
+      flowCtx.strokeStyle = "#aaa"; flowCtx.lineWidth = 1; flowCtx.stroke();
+      const bright = (r*299+g*587+b*114)/1000;
+      flowCtx.fillStyle = bright>128?"#333":"#fff"; flowCtx.font = "bold 20px monospace"; flowCtx.textAlign = "center";
+      flowCtx.fillText(hex, sx+swatchW/2, sy+blockH/2-6);
+      flowCtx.font = "13px Yu Gothic, sans-serif";
+      flowCtx.fillText("カラーコード", sx+swatchW/2, sy+blockH/2+18);
+      flowCtx.textAlign = "left";
+    }
+  }
+
+  // ── ⑥ カラーコード（独立スライダー） ──
+  const hrSlider = document.getElementById("hrSlider");
+  const hgSlider = document.getElementById("hgSlider");
+  const hbSlider = document.getElementById("hbSlider");
+
+  function updateHexPanel() {
+    const r = parseInt(hrSlider.value), g = parseInt(hgSlider.value), b = parseInt(hbSlider.value);
+    document.getElementById("hrValue").textContent = r;
+    document.getElementById("hgValue").textContent = g;
+    document.getElementById("hbValue").textContent = b;
+    const hex = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    document.getElementById("hexColorSwatch").style.background = hex;
+    document.getElementById("hexColorCode").textContent = hex;
+    paintSliderFill(hrSlider); paintSliderFill(hgSlider); paintSliderFill(hbSlider);
+  }
+  hrSlider.addEventListener("input", updateHexPanel);
+  hgSlider.addEventListener("input", updateHexPanel);
+  hbSlider.addEventListener("input", updateHexPanel);
+
+  document.getElementById("hexDecodeBtn").addEventListener("click", () => {
+    const hex = document.getElementById("hexInput").value.trim();
+    const result = document.getElementById("hexDecodeResult");
+    if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+      result.style.display = "block";
+      document.getElementById("hexDecodeText").textContent = "⚠ 正しい形式で入力してください（例：#FF8800）";
+      return;
+    }
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    document.getElementById("hexDecodeSwatch").style.background = hex;
+    document.getElementById("hexDecodeText").innerHTML =
+      `R: <strong>${r}</strong>（${hex.slice(1,3).toUpperCase()}）　G: <strong>${g}</strong>（${hex.slice(3,5).toUpperCase()}）　B: <strong>${b}</strong>（${hex.slice(5,7).toUpperCase()}）`;
+    result.style.display = "block";
+    hrSlider.value = r; hgSlider.value = g; hbSlider.value = b;
+    updateHexPanel();
+  });
+
+  // よく使われる色パレット
+  const namedColors = [
+    {name:"赤",hex:"#FF0000"},{name:"緑",hex:"#00FF00"},{name:"青",hex:"#0000FF"},
+    {name:"黄",hex:"#FFFF00"},{name:"シアン",hex:"#00FFFF"},{name:"マゼンタ",hex:"#FF00FF"},
+    {name:"白",hex:"#FFFFFF"},{name:"黒",hex:"#000000"},{name:"グレー",hex:"#808080"},
+    {name:"橙",hex:"#FF8000"},{name:"桃",hex:"#FF69B4"},{name:"紺",hex:"#000080"},
+    {name:"茶",hex:"#8B4513"},{name:"黄緑",hex:"#7FFF00"},{name:"空色",hex:"#87CEEB"},{name:"紫",hex:"#800080"},
+  ];
+  const palette = document.getElementById("colorPalette");
+  namedColors.forEach(c => {
+    const ri = parseInt(c.hex.slice(1,3),16), gi = parseInt(c.hex.slice(3,5),16), bi = parseInt(c.hex.slice(5,7),16);
+    const tc = (ri*299+gi*587+bi*114)/1000 > 128 ? "#333" : "#fff";
+    const el = document.createElement("div");
+    el.style.cssText = `background:${c.hex}; color:${tc}; padding:10px 14px; border-radius:8px; cursor:pointer; border:1px solid #ccc; font-size:13px; text-align:center; min-width:70px;`;
+    el.innerHTML = `<div style="font-weight:bold;">${c.name}</div><div style="font-family:monospace; font-size:11px;">${c.hex}</div>`;
+    el.addEventListener("click", () => {
+      hrSlider.value = ri; hgSlider.value = gi; hbSlider.value = bi; updateHexPanel();
+    });
+    palette.appendChild(el);
+  });
+
+  // ── スライダーの塗りつぶし色を各つまみの色で統一表示 ──
+  function paintSliderFill(el) {
+    const min = parseFloat(el.min) || 0;
+    const max = parseFloat(el.max) || 100;
+    const val = parseFloat(el.value);
+    const pct = ((val - min) / (max - min)) * 100;
+    const fillColor = el.dataset.fillColor;
+    el.style.background = `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${pct}%, #e0e0e0 ${pct}%, #e0e0e0 100%)`;
+  }
+  const allSliders = document.querySelectorAll('input[type="range"]');
+  allSliders.forEach(el => {
+    const m = (el.getAttribute("style") || "").match(/accent-color:\s*(#[0-9a-fA-F]{3,6})/);
+    el.dataset.fillColor = m ? m[1] : "#999";
+    paintSliderFill(el);
+    el.addEventListener("input", () => paintSliderFill(el));
+  });
+
+  // 初期化
+  drawAdditive();
+  drawSubtractive();
+  drawColorModeSamples();
+  updateColor();
+  updateFlow();
+  updateHexPanel();
+  updateQuizSwatch();
+  generateQuizColor();
+</script>
+</body>
+</html>
