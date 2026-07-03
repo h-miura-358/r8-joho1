@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文字データのデジタル化 - 確認問題・発展課題</title>
+  <style>
+    body { font-family: "Yu Gothic", sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; }
+    .container { max-width: 800px; margin: auto; }
+    h1 { text-align: center; margin-bottom: 20px; color: #1565c0; }
+    .panel { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .panel h2 { margin-top: 0; border-bottom: 2px solid #4a90e2; padding-bottom: 8px; color: #2c3e9e; }
+    
+    /* ⑤ 基本問題用のスタイル（青系） */
+    .question-block { background: #f0f7ff; border-left: 4px solid #4a90e2; padding: 16px 18px; border-radius: 8px; margin-bottom: 16px; }
+    
+    /* ⑥ 考えてみよう用のスタイル（オレンジ系） */
+    .question-block-dev { background: #fff4e8; border-left: 4px solid #ff9800; padding: 16px 18px; border-radius: 8px; margin-bottom: 16px; }
+    
+    .question-title { font-weight: bold; margin-bottom: 8px; font-size: 16px; line-height: 1.5; }
+    .question-choices { font-size: 14px; display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; }
+    @media (min-width: 600px) {
+      .question-choices { grid-template-columns: 1fr 1fr; }
+    }
+    
+    details { margin-top: 10px; }
+    summary { cursor: pointer; font-size: 14px; font-weight: bold; user-select: none; margin-right: 12px; display: inline-block; }
+    
+    /* ボタン色を調整 */
+    .sum-blue { color: #4a90e2; }
+    .sum-blue:hover { color: #1565c0; }
+    .sum-orange { color: #e67e22; }
+    .sum-orange:hover { color: #d35400; }
+    
+    .answer-box { margin-top: 8px; font-size: 14px; background: #ffffff; padding: 12px 16px; border-radius: 6px; border: 1px solid #ddd; line-height: 1.6; }
+    .highlight { color: #d32f2f; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>文字データのデジタル化<br><span style="font-size: 18px; color: #555;">確認問題・発展課題ワークシート</span></h1>
+
+  <div class="panel">
+    <h2>① 基本問題</h2>
+    <p style="margin:0 0 16px; color:#666;">これまでに学んだ内容を確認しましょう。「▶ 答えを確認する」を押すと、正解と解説が表示されます。</p>
+    
+    <div style="display:flex; flex-direction:column; gap:6px;">
+
+      <div class="question-block">
+        <div class="question-title">問1 次の文字コード方式（ア）〜（ウ）の説明として正しいものを、右側（a〜c）からそれぞれ選ぼう。</div>
+        <div class="question-choices">
+          <div>
+            <strong>【方式】</strong><br>
+            （ア）ASCII<br>
+            （イ）Shift_JIS<br>
+            （ウ）UTF-8
+          </div>
+          <div style="color:#444; border-top: 1px dashed #ccc; padding-top: 8px; margin-top: 8px;">
+            a. 日本語を含む文字をWindowsなどで使うために作られた方式<br>
+            b. 英数字・記号を7bitで表す最初の文字コード規格<br>
+            c. Unicodeを効率よく保存する方式で現在最も普及している
+          </div>
+        </div>
+        <details>
+          <summary class="sum-blue">▶ 答えを確認する</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">（ア）→ b   （イ）→ a   （ウ）→ c</span></strong>
+            <p style="margin: 6px 0 0; color: #555; font-size: 13px;">【解説】ASCIIはインターネットやコンピュータの黎明期に定められた英数字用のコードです。Shift_JISは日本のパソコン（Windows等）で長く主流だった日本語コードであり、UTF-8は世界中の文字を網羅したUnicodeを扱う標準的な方式です。</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block">
+        <div class="question-title">問2 UTF-8で「A」「あ」「😊」を1文字ずつ保存するとき、それぞれ何バイト（byte）使うか答えよう。</div>
+        <details>
+          <summary class="sum-blue">▶ 答えを確認する</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">「A」→ 1 byte ／ 「あ」→ 3 byte ／ 「😊」→ 4 byte</span></strong>
+            <p style="margin: 6px 0 0; color: #555; font-size: 13px;">【解説】UTF-8は文字の種類によってデータ量が変わる可変長コードです。半角英数字は1バイト、ひらがなや一般的な漢字は3バイト、絵文字や一部の特殊な漢字は4バイトを使用します。</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block">
+        <div class="question-title">問3 「ABC」という文字列をUTF-8で保存したとき、データ量は全体で何バイトになるか計算しなさい。</div>
+        <details>
+          <summary class="sum-blue">▶ 答えを確認する</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">3バイト（byte）</span></strong>
+            <p style="margin: 6px 0 0; color: #555; font-size: 13px;">【解説】「A」「B」「C」はすべて半角の英字（ASCII文字）です。UTF-8において英字は1文字あたり1バイトで計算されるため、 1バイト × 3文字 ＝ 3バイト となります。</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block">
+        <div class="question-title">問4 画面上の文字が「文字化け」を起こしてしまう原因を、「文字コード」という語句を使って説明しよう。</div>
+        <details>
+          <summary class="sum-blue">▶ 答えを確認する</summary>
+          <div class="answer-box">
+            <strong>解答例：</strong><br>
+            ファイルを保存したときの文字コード方式と、ファイルを読み込むときの文字コード方式が異なると、コンピュータが同じ0と1の並び（バイト列）をまったく別の文字として解釈してしまうため。
+          </div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>② 考えてみよう（発展）</h2>
+    <p style="margin:0 0 16px; color:#666;">得られた知識を応用して、少し複雑な仕組みや背景について考察してみましょう。</p>
+    
+    <div style="display:flex; flex-direction:column; gap:6px;">
+
+      <div class="question-block-dev">
+        <div class="question-title">問1 ASCIIコードは 7bit で128種類の文字を表現できます。では、これを <strong>8bit</strong> に拡張した場合、表現できる文字の種類は最大で何種類になるか計算しなさい。</div>
+        
+        <details style="display:inline-block; margin-right:10px;">
+          <summary class="sum-orange">💡 ヒントを見る</summary>
+          <div class="answer-box" style="border-color: #ffe0b2;">
+            1bit（桁）増えるごとに、表現できる情報量は<strong>2倍</strong>になります。2の8乗（2を8回かける）を計算してみましょう。
+          </div>
+        </details>
+        
+        <details style="display:inline-block;">
+          <summary class="sum-orange">▶ 解答・解説</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">256種類</span></strong>
+            <p style="margin: 6px 0 0; color: #555; font-size: 13px;">【解説】nビットで表現できる情報の種類は「2のn乗」通りです。したがって、8ビットでは 2の8乗 ＝ <strong>256種類</strong> となります。この8ビットの単位が現在の「1バイト」の基準になっています。</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block-dev">
+        <div class="question-title">問2 「情報Ⅰ」という文字列をUTF-8で保存すると何バイトになるか、計算の過程も含めて答えなさい。<br><span style="font-size:13px; color:#666;">（※漢字・ひらがな・カタカナは3 byte、英数字・ローマ数字の半角は1 byte、全角は3 byteとして数えるものとします）</span></div>
+        
+        <details style="display:inline-block; margin-right:10px;">
+          <summary class="sum-orange">💡 ヒントを見る</summary>
+          <div class="answer-box" style="border-color: #ffe0b2;">
+            「情」「報」「Ⅰ」の3つの文字に分解して考えます。ローマ数字の「Ⅰ」は環境依存文字（全角扱い）になります。
+          </div>
+        </details>
+        
+        <details style="display:inline-block;">
+          <summary class="sum-orange">▶ 解答・解説</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">9バイト（byte）</span></strong>
+            <p style="margin: 6px 0 0; color: #555; font-size: 13px;">【解説】<br>
+            ・「情」（漢字）＝ 3バイト<br>
+            ・「報」（漢字）＝ 3バイト<br>
+            ・「Ⅰ」（全角ローマ数字）＝ 3バイト<br>
+            計算式： 3 ＋ 3 ＋ 3 ＝ <strong>9バイト</strong> となります。</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block-dev">
+        <div class="question-title">問3 コンピュータの内部には文字の「形（フォント）」そのものは保存されていません。なぜ<strong>数字（データ）だけで文字を正しく画面に表示できるのか</strong>、その仕組みを説明しなさい。</div>
+        
+        <details style="display:inline-block; margin-right:10px;">
+          <summary class="sum-orange">💡 ヒントを見る</summary>
+          <div class="answer-box" style="border-color: #ffe0b2;">
+            コンピュータ側（OSやブラウザ）に、あらかじめ用意されている「番号と文字の形の対応表」をイメージして説明してみましょう。
+          </div>
+        </details>
+        
+        <details style="display:inline-block;">
+          <summary class="sum-orange">▶ 解答・解説</summary>
+          <div class="answer-box">
+            <strong>解答例：</strong><br>
+            コンピュータ内部には文字ごとの固有の番号（文字コード）のみが保存されており、画面に表示する際は、システムに内蔵された「フォントデータ」を参照して、その番号に対応する文字の形（デザイン）を呼び出して描画しているため。
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block-dev">
+        <div class="question-title">問4 現在、インターネット上の大半のウェブサイトやシステムで <strong>Unicode（UTF-8）</strong> が世界標準として使われています。従来のASCIIや地域ごとの独自規格（Shift_JISなど）と比べて、どのようなメリットがあるからか説明しなさい。</div>
+        
+        <details style="display:inline-block; margin-right:10px;">
+          <summary class="sum-orange">💡 ヒントを見る</summary>
+          <div class="answer-box" style="border-color: #ffe0b2;">
+            世界中の国の人が同じウェブサイトにアクセスしたり、1つの画面の中に日本語・英語・アラビア語・絵文字などを同時に書き込んだりするときのことを考えてみましょう。
+          </div>
+        </details>
+        
+        <details style="display:inline-block;">
+          <summary class="sum-orange">▶ 解答・解説</summary>
+          <div class="answer-box">
+            <strong>解答例：</strong><br>
+            独自の文字コード規格では特定の言語（日本語のみなど）しか扱えず、他国とのデータのやり取りで文字化けが発生していた。世界共通の規格であるUnicode（UTF-8）を使うことで、世界中のすべての言語や絵文字を1つのファイル内で文字化けすることなく同時に扱えるというメリットがある。
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block-dev">
+        <div class="question-title">問5 同じアルファベットの「A」という1文字を保存する場合でも、方式が <strong>ASCII ならば 1 byte</strong>、<strong>UTF-16 ならば 2 byte</strong> のデータ量が消費されます。このように同じ文字なのにデータ量が異なってしまう理由を説明しなさい。</div>
+        
+        <details style="display:inline-block; margin-right:10px;">
+          <summary class="sum-orange">💡 ヒントを見る</summary>
+          <div class="answer-box" style="border-color: #ffe0b2;">
+            それぞれの方式が、もともと「最大で何文字くらいを収録する前提で作られた箱（データの器）なのか」という点に着目してみましょう。
+          </div>
+        </details>
+        
+        <details style="display:inline-block;">
+          <summary class="sum-orange">▶ 解答・解説</summary>
+          <div class="answer-box">
+            <strong>解答例：</strong><br>
+            ASCIIは英数字・記号など「わずか128種類」のみを表現できればよいため1バイト（小さな箱）で足りる。一方、UTF-16は最初から「世界中の膨大な文字（数万字〜数十万字）」を均等に収録・表現することを目的に作られており、全ての文字を表現するために最低でも2バイト（大きな箱）のデータ枠を確保するルールになっているため。
+          </div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

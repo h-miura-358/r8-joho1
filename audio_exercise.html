@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文字データのデジタル化 - 確認問題・発展課題</title>
+  <style>
+    body { font-family: "Yu Gothic", sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; }
+    .container { max-width: 800px; margin: auto; }
+    h1 { text-align: center; margin-bottom: 20px; color: #1565c0; }
+    .panel { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .panel h2 { margin-top: 0; border-bottom: 2px solid #4a90e2; padding-bottom: 8px; color: #2c3e9e; }
+    
+    /* ⑤ 基本問題用のスタイル（青系） */
+    .question-block { background: #f0f7ff; border-left: 4px solid #4a90e2; padding: 16px 18px; border-radius: 8px; margin-bottom: 16px; }
+    
+    /* ⑥ 考えてみよう用のスタイル（オレンジ系） */
+    .question-block-dev { background: #fff4e8; border-left: 4px solid #ff9800; padding: 16px 18px; border-radius: 8px; margin-bottom: 16px; }
+    
+    .question-title { font-weight: bold; margin-bottom: 8px; font-size: 16px; line-height: 1.5; }
+    .question-choices { font-size: 14px; display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; }
+    @media (min-width: 600px) {
+      .question-choices { grid-template-columns: 1fr 1fr; }
+    }
+    
+    details { margin-top: 10px; }
+    summary { cursor: pointer; font-size: 14px; font-weight: bold; user-select: none; margin-right: 12px; display: inline-block; }
+    
+    /* ボタン色を調整 */
+    .sum-blue { color: #4a90e2; }
+    .sum-blue:hover { color: #1565c0; }
+    .sum-orange { color: #e67e22; }
+    .sum-orange:hover { color: #d35400; }
+    
+    .answer-box { margin-top: 8px; font-size: 14px; background: #ffffff; padding: 12px 16px; border-radius: 6px; border: 1px solid #ddd; line-height: 1.6; }
+    .highlight { color: #d32f2f; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>音声の標本化体験<br><span style="font-size: 18px; color: #555;">確認問題・発展課題ワークシート</span></h1>
+
+  <div class="panel">
+    <h2>① 基本問題</h2>
+    <p style="margin:0 0 16px; color:#666;">これまでに学んだ内容を確認しましょう。「▶ 答えを確認する」を押すと、正解と解説が表示されます。</p>
+    
+    <div style="display:flex; flex-direction:column; gap:6px;">
+
+      <div class="question-block">
+        <div class="question-title">問1 音声をデジタル化する際、アナログ波形を一定の時間間隔で区切ることを何というか。</div>
+        <details>
+          <summary class="sum-blue">▶ 答えを確認する</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">標本化（サンプリング）</span></strong>
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block">
+        <div class="question-title">問2 標本化周波数を高くすると、音質とデータ量はそれぞれどう変化するか。</div>
+        <details>
+          <summary class="sum-blue">▶ 答えを確認する</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">音質は向上するが、データ量は増加する。</span></strong>
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block">
+        <div class="question-title">問3 量子化ビット数を増やすと、音の強弱の表現はどう変わるか。</div>
+        <details>
+          <summary class="sum-blue">▶ 答えを確認する</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">表現できる段階数が増え、より滑らかに音を表現できる。</span></strong>
+          </div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>② 考えてみよう（発展）</h2>
+    <p style="margin:0 0 16px; color:#666;">得られた知識を応用して、少し複雑な仕組みや背景について考察してみましょう。</p>
+    
+    <div style="display:flex; flex-direction:column; gap:6px;">
+
+      <div class="question-block-dev">
+        <div class="question-title">問1 標本化周波数を 8 kHz に設定したとき、再現可能な最大周波数はいくつか。また、その理由を標本化定理を用いて説明せよ。</div>
+        <details>
+          <summary class="sum-orange">💡 ヒントを見る</summary>
+          <div class="answer-box" style="border-color: #ffe0b2;">標本化定理では、最大周波数は標本化周波数の半分となります。</div>
+        </details>
+        <details>
+          <summary class="sum-orange">▶ 解答・解説</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">最大 4 kHz</span></strong><br>
+            標本化定理により、正確に再現できるのは標本化周波数の半分までです。
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block-dev">
+        <div class="question-title">問2 8 bit から 16 bit に増やすと、段階数は何倍になるか。</div>
+        <details>
+          <summary class="sum-orange">💡 ヒントを見る</summary>
+          <div class="answer-box" style="border-color: #ffe0b2;">n bit で表現できる段階数は 2 の n 乗（2ⁿ）です。</div>
+        </details>
+        <details>
+          <summary class="sum-orange">▶ 解答・解説</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">256 倍</span></strong><br>
+            8 bit(256段階)から 16 bit(65,536段階)へ増やすと、256倍になります。
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block-dev">
+        <div class="question-title">問3 44.1 kHz・16 bit・ステレオで 74 分間録音した際のデータ量を MB で求めよ。（1 MB = 10⁶ byte とする）</div>
+        <details>
+          <summary class="sum-orange">💡 ヒントを見る</summary>
+          <div class="answer-box" style="border-color: #ffe0b2;">データ量＝周波数×bit数(byte変換)×チャンネル数×秒数 で計算します。</div>
+        </details>
+        <details>
+          <summary class="sum-orange">▶ 解答・解説</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">約 783.8 MB</span></strong><br>
+            44,100Hz × 2byte × 2ch × 74分 × 60秒 ≒ 783.8 MB。
+          </div>
+        </details>
+      </div>
+
+      <div class="question-block-dev">
+        <div class="question-title">問4 CDの標本化周波数が 44.1 kHz なのはなぜか。人間の可聴域（約 20 kHz）と絡めて説明せよ。</div>
+        <details>
+          <summary class="sum-orange">💡 ヒントを見る</summary>
+          <div class="answer-box" style="border-color: #ffe0b2;">可聴域の上限(20 kHz)を再現するために必要な標本化周波数は？</div>
+        </details>
+        <details>
+          <summary class="sum-orange">▶ 解答・解説</summary>
+          <div class="answer-box">
+            <strong>正解： <span class="highlight">可聴域上限の 2 倍以上の標本化が必要なため。</span></strong><br>
+            余裕を持たせ 44.1 kHz となっています。
+          </div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>
