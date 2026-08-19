@@ -52,7 +52,7 @@
       <div style="background:#f0f7ff; border-left:4px solid #4a90e2; padding:16px; border-radius:8px;">
         <h3 style="margin:0 0 8px; color:#2c3e9e;">🎞 フレームレート（fps）</h3>
         <p style="margin:0 0 6px;">1秒間に表示するフレーム数。fps（frames per second）で表します。</p>
-        <ul style="margin:0; padding-left:18px; font-size:13px; line-height:1.9;">
+        <ul style="margin:0; padding-left:18px; font-size:16px; line-height:1.9;">
           <li>映画：<strong>24 fps</strong></li>
           <li>テレビ放送：<strong>30 fps</strong></li>
           <li>ゲーム・スポーツ：<strong>60 fps</strong></li>
@@ -62,24 +62,23 @@
       <div style="background:#e8f5e9; border-left:4px solid #27ae60; padding:16px; border-radius:8px;">
         <h3 style="margin:0 0 8px; color:#1a5c2a;">📐 解像度</h3>
         <p style="margin:0 0 6px;">1フレームあたりの横×縦のピクセル数。</p>
-        <table style="font-size:13px; margin-top:6px;">
+        <table style="font-size:16px; margin-top:6px;">
           <thead><tr><th>名称</th><th>解像度</th></tr></thead>
           <tbody>
-            <tr><td>SD</td><td>720 × 480</td></tr>
-            <tr><td>HD（720p）</td><td>1280 × 720</td></tr>
+            <tr><td>標準画質（SD）</td><td>720 × 480</td></tr>
+            <tr><td>HD（高精細）（720p）</td><td>1280 × 720</td></tr>
             <tr><td>フルHD（1080p）</td><td>1920 × 1080</td></tr>
             <tr><td>4K</td><td>3840 × 2160</td></tr>
           </tbody>
         </table>
       </div>
-      <div style="background:#fff3e0; border-left:4px solid #e67e22; padding:16px; border-radius:8px;">
-        <h3 style="margin:0 0 8px; color:#7f3300;">📊 データ量の計算式</h3>
-        <div style="background:#fffde7; padding:12px; border-radius:8px; margin-bottom:8px; text-align:center; font-size:14px; font-weight:bold; line-height:2;">
-          データ量（bit）＝<br>
-          横px × 縦px × 色深度（bit）× fps × 時間（秒）
-        </div>
-        <p style="margin:0; font-size:13px; color:#666;">これは非圧縮の場合。実際の動画は圧縮により大幅に小さくなります。</p>
+    </div>
+    <div style="background:#fff3e0; border-left:4px solid #e67e22; padding:16px; border-radius:8px; margin-top:16px;">
+      <h3 style="margin:0 0 8px; color:#7f3300;">📊 データ量の計算式</h3>
+      <div style="background:#fffde7; padding:12px; border-radius:8px; margin-bottom:8px; text-align:center; font-size:18px; font-weight:bold; line-height:2;">
+        データ量（bit）＝ 横ピクセル数（px）× 縦ピクセル数（px）× 階調（bit）× フレームレート（fps）× 時間（秒）
       </div>
+      <p style="margin:0; font-size:13px; color:#666;">これは非圧縮の場合。実際の動画は圧縮により大幅に小さくなります。</p>
     </div>
   </div>
 
@@ -88,7 +87,7 @@
     <h2>② フレームレートを体験しよう</h2>
 
     <div class="task-box">
-      <h3>📋 課題：fpsを変えて滑らかさの違いを確認しよう</h3>
+      <h3>📋 やってみよう：fpsを変えて滑らかさの違いを確認しよう</h3>
       <p style="margin:0;">fpsスライダーを動かしてアニメーションの滑らかさを比較しよう。どこから「滑らかに」見えるか確認しよう。</p>
     </div>
 
@@ -131,7 +130,7 @@
   <div class="panel">
     <h2>③ デジタル化の流れ</h2>
     <p style="margin:0 0 12px; color:#555;">動画がデジタルデータになるまでの3ステップを見てみよう。</p>
-    <canvas id="flowCanvas" width="1000" height="540" style="width:100%;"></canvas>
+    <canvas id="flowCanvas" width="1000" height="700" style="width:100%;"></canvas>
   </div>
 
   <!-- ④ データ量を計算しよう -->
@@ -139,8 +138,8 @@
     <h2>④ 解像度・fps・時間からデータ量を計算しよう</h2>
 
     <div class="task-box">
-      <h3>📋 課題：設定を変えてデータ量の変化を確認しよう</h3>
-      <p style="margin:0;">各パラメータを変えて非圧縮データ量を計算しよう。どの項目がデータ量に最も影響するか考えよう。</p>
+      <h3>📋 やってみよう：設定を変えてデータ量の変化を確認しよう</h3>
+      <p style="margin:0;">それぞれの値を変えてデータ量を計算しよう。どの項目がデータ量に最も影響するか考えよう。</p>
     </div>
 
     <div style="margin-bottom:16px;">
@@ -164,7 +163,7 @@
         <input type="number" id="vidHeight" value="1080" min="1">
       </div>
       <div>
-        <label style="font-weight:bold; font-size:14px;">色深度（bit/px）</label>
+        <label style="font-weight:bold; font-size:14px;">階調（bit/px）</label>
         <select id="colorDepth">
           <option value="1">1 bit（モノクロ）</option>
           <option value="8">8 bit（グレースケール）</option>
@@ -211,7 +210,7 @@
       <ul style="margin:6px 0 0; padding-left:20px;">
         <li>解像度をSD→4Kにするとデータ量は何倍になる？</li>
         <li>24fpsと60fpsでは何倍違う？</li>
-        <li>YouTubeで「1080p・30fps・1時間」の動画を非圧縮で保存すると何GBになる？</li>
+        <li>YouTubeで「1080p・30fps・1時間」の動画を保存すると何GBになる？</li>
       </ul>
     </div>
   </div>
@@ -333,7 +332,7 @@
 
     document.getElementById("calcResult").style.display = "block";
     document.getElementById("calcAnswer").innerHTML =
-      `<strong>非圧縮データ量 ＝ <span style="color:#27ae60; font-size:22px;">${fmt(converted)} ${unit}</span></strong>`;
+      `<strong>データ量 ＝ <span style="color:#27ae60; font-size:22px;">${fmt(converted)} ${unit}</span></strong>`;
 
     let steps =
       `① 1フレームのデータ量<br>` +
@@ -382,7 +381,7 @@
 
     // 段①：フレーム列
     {
-      const baseY = 0, n = 8, fw = 80, fh = GRAPH_H - 30;
+      const baseY = 0, n = 8, fw = 80, fh = GRAPH_H - 54;
       const startX = (W - n*(fw+8)) / 2, startY = baseY + TITLE_H + 10;
       for (let i = 0; i < n; i++) {
         const x = startX + i*(fw+8);
@@ -398,14 +397,14 @@
         flowCtx.fillText(`F${i+1}`, x+fw/2, startY+fh+18);
       }
       flowCtx.fillStyle = "#555"; flowCtx.font = "13px Yu Gothic, sans-serif";
-      flowCtx.fillText(`← 1秒間に fps 枚のフレームを記録`, startX, startY + fh + 34);
+      flowCtx.fillText(`↑ 1秒間に fps 枚のフレームを記録`, startX, startY + fh + 34);
       flowCtx.textAlign = "left";
     }
 
     // 段②：ピクセルグリッド
     {
       const baseY = ROW, startY = baseY + TITLE_H + 10;
-      const gridSize = GRAPH_H - 30, cols = 12, rows_g = 8;
+      const gridSize = GRAPH_H - 36, cols = 12, rows_g = 8;
       const cw = gridSize / cols, ch = gridSize / rows_g;
       const sx = (W - gridSize * 2 - 60) / 2;
       const colors = ["#e74c3c","#3498db","#2ecc71","#f1c40f","#9b59b6","#1abc9c","#e67e22","#ecf0f1"];
