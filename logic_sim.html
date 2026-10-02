@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>論理回路シミュレーター</title>
+<style>
+  body { font-family: "Yu Gothic", sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; }
+  .container { max-width: 1100px; margin: auto; }
+  h1 { text-align: center; }
+  .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+  .panel h2 { margin-top: 0; }
+  .info-box { background: #eef5ff; padding: 14px 18px; border-radius: 10px; margin-top: 12px; }
+  .try-box { background: #e8f5e9; padding: 14px 18px; border-radius: 10px; margin-top: 10px; }
+  .task-box { background: #fff8e1; border-left: 5px solid #f9a825; padding: 14px 18px; border-radius: 10px; margin-bottom: 16px; }
+  .task-box h3 { margin: 0 0 8px; color: #f57f17; }
+  button { padding: 10px 20px; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; background: #4a90e2; color: white; }
+  button:hover { opacity: 0.9; }
+  button.io { background: #27ae60; }
+  button.ghost { background: #ccc; color: #333; }
+  button.ghost:hover { opacity: 0.85; }
+  .clear-confirm-popup {
+    display:inline-flex; align-items:center; gap:10px; margin-left:10px;
+    background:white; border:1px solid #e67e22; border-radius:8px; padding:8px 12px;
+    box-shadow:0 4px 10px rgba(0,0,0,.15); font-size:13.5px; color:#7f3300;
+  }
+  .clear-confirm-popup button { padding:5px 14px; font-size:13px; }
+  .clear-confirm-popup button.yes { background:#e74c3c; }
+  .clear-confirm-popup button.no { background:#ccc; color:#333; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: #4a90e2; color: white; padding: 10px 18px; text-align: center; }
+  td { padding: 10px 18px; border-bottom: 1px solid #ddd; text-align: center; }
+  tr:nth-child(even) td { background: #f0f7ff; }
+  canvas, .board-frame { border: 1px solid #ddd; border-radius: 8px; }
+  @media (max-width: 700px) { .two-col, .three-col { grid-template-columns: 1fr !important; } }
+
+  /* ---- gate legend (panel ①) ---- */
+  .legend-grid { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+  .legend-item { background:white; border:1px solid #cfe0f5; border-radius:8px; padding:8px 8px; text-align:center; width:100px; }
+  .legend-item svg { width:60px; height:40px; display:block; margin:0 auto; }
+  .legend-item span { font-family:monospace; font-size:12px; color:#4a90e2; font-weight:bold; white-space:normal; }
+  .mini-body { fill:white; stroke:#4a90e2; stroke-width:2.4; }
+  .mini-bubble { fill:white; stroke:#4a90e2; stroke-width:2.4; }
+  .mini-stub { stroke:#9db3d6; stroke-width:2.2; }
+
+  /* ---- simulator toolbar (2段構成) ---- */
+  .toolbar { display:flex; flex-direction:column; gap:10px; margin-bottom:14px; }
+  .toolbar-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .toolbar-row-label { font-size:12px; color:#888; width:100%; margin-bottom:-2px; }
+
+  /* ---- board ---- */
+  .board-wrap { border-radius:10px; }
+  .board-frame {
+    position:relative;
+    overflow:hidden;
+    background:
+      radial-gradient(circle, rgba(74,144,226,.18) 1.4px, transparent 1.8px) 0 0/24px 24px,
+      #fbfcfe;
+  }
+  .board-canvas { position:relative; width:1000px; height:640px; transform-origin:0 0; }
+  svg.wire-layer { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+  .wire { fill:none; stroke-width:3; stroke-linecap:round; }
+  .wire.lo { stroke:#b9c2cc; }
+  .wire.hi { stroke:#27ae60; filter:drop-shadow(0 0 3px rgba(39,174,96,.6)); stroke-dasharray:6 7; animation:flow .6s linear infinite; }
+  .wire-temp { fill:none; stroke:#4a90e2; stroke-width:2.2; stroke-dasharray:4 5; pointer-events:none; }
+  @keyframes flow { to { stroke-dashoffset:-26; } }
+  @media (prefers-reduced-motion: reduce) { .wire.hi { animation:none; } }
+
+  .comp { position:absolute; width:90px; height:60px; user-select:none; touch-action:none; cursor:grab; }
+  .comp:active { cursor:grabbing; }
+  .comp-label { position:absolute; top:-18px; left:0; font-family:monospace; font-size:10.5px; color:#7a8a99; white-space:nowrap; }
+  .comp-shape { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .gate-body { fill:white; stroke:#4a90e2; stroke-width:2.4; }
+  .gate-body-thin { fill:none; stroke:#4a90e2; stroke-width:2.4; }
+  .gate-bubble { fill:white; stroke:#4a90e2; stroke-width:2.4; }
+  .stub { stroke:#9db3d6; stroke-width:2.4; }
+
+  .comp-del {
+    position:absolute; top:-19px; right:-4px; width:18px; height:18px; border-radius:50%;
+    border:1px solid #ddd; background:white; color:#999; font-size:12px; line-height:1;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
+  }
+  .comp-del:hover { background:#e74c3c; border-color:#e74c3c; color:white; }
+
+  .pin {
+    position:absolute; width:26px; height:26px; margin:-13px 0 0 -13px; border-radius:50%;
+    cursor:crosshair; z-index:3; background:transparent;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .pin::after {
+    content:''; display:block; width:12px; height:12px; border-radius:50%;
+    background:white; border:2px solid #4a90e2; pointer-events:none;
+  }
+  .pin.hi::after { background:#27ae60; border-color:#27ae60; box-shadow:0 0 8px rgba(39,174,96,.6); }
+  .pin:hover::after { transform:scale(1.25); }
+
+  .switch-wrap { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:8px; background:white; border:2px solid #4a90e2; border-radius:8px; }
+  .switch { width:38px; height:20px; border-radius:999px; background:#ccc; border:1px solid #aaa; position:relative; cursor:pointer; transition:background .15s ease; }
+  .switch .knob { position:absolute; top:1px; left:1px; width:16px; height:16px; border-radius:50%; background:white; transition:left .15s ease; box-shadow:0 1px 2px rgba(0,0,0,.3); }
+  .switch.on { background:#27ae60; }
+  .switch.on .knob { left:19px; }
+  .switch-val { font-family:monospace; font-weight:bold; font-size:14px; color:#999; width:12px; text-align:center; }
+  .switch.on ~ .switch-val { color:#27ae60; }
+
+  .led-wrap { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:8px; background:white; border:2px solid #4a90e2; border-radius:8px; }
+  .led { width:22px; height:22px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #eee, #ccc 70%); border:2px solid #bbb; }
+  .led.hi { background:radial-gradient(circle at 35% 30%, #b6f2cf, #27ae60 65%); border-color:#27ae60; box-shadow:0 0 14px 3px rgba(39,174,96,.55); }
+  .led-val { font-family:monospace; font-weight:bold; font-size:14px; color:#999; width:12px; text-align:center; }
+  .led.hi ~ .led-val { color:#27ae60; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>論理回路シミュレーター</h1>
+
+  <!-- 学習の目的 -->
+  <div class="panel" style="background:#fffde7; border-left:6px solid #f9a825;">
+    <h2 style="color:#f57f17; margin-top:0;">🎯 このコンテンツで学ぶこと</h2>
+    <p style="margin:0 0 10px;">コンピュータの中では、すべての計算や判断が<strong>0と1の組み合わせ（論理回路）</strong>で行われています。回路を組み合わせて、信号がどう伝わるかを体験してみましょう。</p>
+    <ul style="margin:0; padding-left:20px;">
+      <li>AND回路・OR回路・NOT回路など<strong>基本的な論理回路</strong>の働きを理解する</li>
+      <li>スイッチとLEDを使って<strong>実際に回路を組み立て</strong>、0/1の信号の伝わり方を体験する</li>
+      <li>真理値表と回路の動きを見比べて、それぞれの回路の意味を確認する</li>
+      <li>XOR回路とAND回路を組み合わせた<strong>半加算器</strong>の仕組みを知る</li>
+    </ul>
+  </div>
+
+  <!-- ① 論理回路の基本 -->
+  <div class="panel">
+    <h2>① 論理回路の基本</h2>
+    <p style="margin:0 0 14px; color:#555;">論理回路は、1つ以上の入力(0か1)を受け取り、決まったルールで1つの出力(0か1)を返す部品です。</p>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div style="background:#f0f7ff; border-left:4px solid #4a90e2; padding:16px; border-radius:8px;">
+        <h3 style="margin:0 0 8px; color:#2c3e9e;">🔲 回路の種類</h3>
+        <p style="margin:0 0 6px;">シミュレーターで使える7種類の回路です。</p>
+        <div class="legend-grid" id="gateLegend"></div>
+      </div>
+      <div style="background:#e8f5e9; border-left:4px solid #27ae60; padding:16px; border-radius:8px;">
+        <h3 style="margin:0 0 8px; color:#1a5c2a;">📐 真理値表（入力と出力の関係）</h3>
+        <div style="display:flex; gap:14px; flex-wrap:wrap;">
+          <table style="width:auto; min-width:190px;"><thead><tr><th colspan="3">AND</th></tr><tr><th>A</th><th>B</th><th>出力</th></tr></thead>
+            <tbody><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>0</td><td>1</td><td>0</td></tr><tr><td>1</td><td>0</td><td>0</td></tr><tr><td>1</td><td>1</td><td>1</td></tr></tbody></table>
+          <table style="width:auto; min-width:190px;"><thead><tr><th colspan="3">OR</th></tr><tr><th>A</th><th>B</th><th>出力</th></tr></thead>
+            <tbody><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>0</td><td>1</td><td>1</td></tr><tr><td>1</td><td>0</td><td>1</td></tr><tr><td>1</td><td>1</td><td>1</td></tr></tbody></table>
+          <table style="width:auto; min-width:140px;"><thead><tr><th colspan="2">NOT</th></tr><tr><th>A</th><th>出力</th></tr></thead>
+            <tbody><tr><td>0</td><td>1</td></tr><tr><td>1</td><td>0</td></tr></tbody></table>
+          <table style="width:auto; min-width:190px;"><thead><tr><th colspan="3">XOR</th></tr><tr><th>A</th><th>B</th><th>出力</th></tr></thead>
+            <tbody><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>0</td><td>1</td><td>1</td></tr><tr><td>1</td><td>0</td><td>1</td></tr><tr><td>1</td><td>1</td><td>0</td></tr></tbody></table>
+        </div>
+        <p style="margin:8px 0 0; font-size:15px; color:#666;">NAND・NOR・XNORの各回路は、それぞれAND・OR・XOR回路の出力を反転したものです。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 体験してみよう -->
+  <div class="panel">
+    <h2>② 回路を組み立てて体験しよう</h2>
+
+    <div class="task-box">
+      <h3>📋 課題：「両方が1のときだけ点灯する」回路を作ろう</h3>
+      <p style="margin:0;">入力（スイッチ）を2つ、AND回路を1つ、出力（LED）を1つ配置して配線し、スイッチを両方1にしたときだけLEDが光ることを確かめよう。</p>
+    </div>
+
+    <div style="background:#fff3e0; border-left:4px solid #e67e22; padding:16px; border-radius:10px; margin-bottom:16px;">
+      <h3 style="margin:0 0 10px; color:#7f3300;">🔌 信号のルールと操作方法</h3>
+      <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-bottom:10px;">
+        <strong style="min-width:110px; display:inline-block;">入力（スイッチ）</strong>
+        <span style="display:inline-flex; align-items:center; gap:8px;"><div class="switch" style="pointer-events:none;"><div class="knob"></div></div> OFF = 0</span>
+        <span style="display:inline-flex; align-items:center; gap:8px;"><div class="switch on" style="pointer-events:none;"><div class="knob"></div></div> ON = 1</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-bottom:12px;">
+        <strong style="min-width:110px; display:inline-block;">出力（LED）</strong>
+        <span style="display:inline-flex; align-items:center; gap:8px;"><div class="led" style="pointer-events:none;"></div> 消灯 = 0</span>
+        <span style="display:inline-flex; align-items:center; gap:8px;"><div class="led hi" style="pointer-events:none;"></div> 点灯 = 1</span>
+      </div>
+      <p style="margin:0 0 14px; font-size:15px; color:#666;">配線も同じルールで、信号が1のときは緑、0のときは灰色で表示されます。</p>
+
+      <hr style="border:none; border-top:1px solid #f0c78a; margin:0 0 14px;">
+
+      <p style="margin:0 0 8px; font-weight:bold; color:#7f3300;">🖱️ 操作方法</p>
+      <ul style="margin:0; padding-left:20px; line-height:1.9; font-size:15px; color:#555;">
+        <li><strong>部品を置く</strong>：下のボタンを押すと、作業エリアに部品が追加される</li>
+        <li><strong>動かす</strong>：部品を指やマウスでドラッグすると、好きな場所に移動できる</li>
+        <li><strong>つなぐ</strong>：部品右側の丸（出力ピン）を、つなぎたい部品の左側の丸（入力ピン）までドラッグする</li>
+        <li><strong>消す</strong>：配線はクリックで切断／部品は右上の「×」で削除できる</li>
+        <li><strong>切り替える</strong>：入力（スイッチ）をクリックすると0と1が切り替わる</li>
+      </ul>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-row">
+        <button class="io" data-add="INPUT">＋ 入力（スイッチ）</button>
+        <button class="io" data-add="OUTPUT">＋ 出力（LED）</button>
+      </div>
+      <div class="toolbar-row">
+        <button data-add="AND">＋ AND回路</button>
+        <button data-add="OR">＋ OR回路</button>
+        <button data-add="NOT">＋ NOT回路</button>
+        <button data-add="XOR">＋ XOR回路</button>
+        <button data-add="NAND">＋ NAND回路</button>
+        <button data-add="NOR">＋ NOR回路</button>
+        <button data-add="XNOR">＋ XNOR回路</button>
+        <button class="ghost" id="clearAll">全消去</button>
+      </div>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board-frame" id="boardFrame2">
+        <div id="board2" class="board-canvas">
+          <svg class="wire-layer" id="wireLayer2"></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="try-box">
+      <strong>試してみよう！</strong>
+      <ul style="margin:6px 0 0; padding-left:20px;">
+        <li>NOT回路を2つ直列につなぐと、もとの信号に戻る？</li>
+        <li>AND回路とNOT回路を組み合わせて、NAND回路と同じ動きの回路を作れる？</li>
+        <li>OR回路とNOT回路を組み合わせて、NOR回路と同じ動きの回路を作れる？</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ③ 半加算器 -->
+  <div class="panel">
+    <h2>③ 半加算器に挑戦</h2>
+    <p style="margin:0 0 12px; color:#555;">2つの1桁の2進数（AとB）を足し算する回路を「半加算器」と呼びます。<strong>Sum（和）</strong>はXOR回路、<strong>Carry（繰り上がり）</strong>はAND回路で求められます。</p>
+
+    <div class="task-box">
+      <h3>📋 課題：XOR回路とAND回路だけで半加算器を組み立てよう</h3>
+      <p style="margin:0;">下の盤面に、スイッチ×2・XOR回路×1・AND回路×1・LED×2を配置し、A・BをそれぞれXOR回路とAND回路の両方に配線してみよう。わからなければ下のボタンで答え合わせできます。</p>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-row">
+        <button class="io" data-add3="INPUT">＋ 入力（スイッチ）</button>
+        <button class="io" data-add3="OUTPUT">＋ 出力（LED）</button>
+      </div>
+      <div class="toolbar-row">
+        <button data-add3="AND">＋ AND回路</button>
+        <button data-add3="OR">＋ OR回路</button>
+        <button data-add3="NOT">＋ NOT回路</button>
+        <button data-add3="XOR">＋ XOR回路</button>
+        <button data-add3="NAND">＋ NAND回路</button>
+        <button data-add3="NOR">＋ NOR回路</button>
+        <button data-add3="XNOR">＋ XNOR回路</button>
+        <button class="ghost" id="clearAll3">全消去</button>
+      </div>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board-frame" id="boardFrame3">
+        <div id="board3" class="board-canvas">
+          <svg class="wire-layer" id="wireLayer3"></svg>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:16px;">
+      <button id="loadExample">（答え合わせ）半加算器を表示</button>
+      <button id="loadExampleXor" class="ghost">XORを用いた半加算器を表示</button>
+    </div>
+
+    <div class="try-box" style="margin-top:14px;">
+      <strong>試してみよう！</strong>
+      <ul style="margin:6px 0 12px; padding-left:20px;">
+        <li>A=1、B=1のとき、SumとCarryはそれぞれ何になる？</li>
+        <li>3つの入力を足し合わせる「全加算器」には、あとどんな回路が必要だろう？</li>
+      </ul>
+      <p style="margin:0 0 8px; font-size:14px; color:#666;">※全加算器は、半加算器に「下の桁からの繰り上がり（Cin）」の入力を1つ追加した回路です。</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button id="loadFullAdder" class="ghost">（参考）全加算器を表示</button>
+        <button id="loadFullAdderXor" class="ghost">XORを用いた全加算器を表示</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const GATE_DEFS = {
+    AND:{inputs:2}, OR:{inputs:2}, NOT:{inputs:1}, XOR:{inputs:2},
+    NAND:{inputs:2}, NOR:{inputs:2}, XNOR:{inputs:2},
+    INPUT:{inputs:0}, OUTPUT:{inputs:1}
+  };
+  const GATE_ORDER = ['AND','OR','NOT','XOR','NAND','NOR','XNOR'];
+  const DISPLAY_NAMES = {
+    INPUT:'スイッチ', OUTPUT:'LED',
+    AND:'AND回路', OR:'OR回路', NOT:'NOT回路', XOR:'XOR回路',
+    NAND:'NAND回路', NOR:'NOR回路', XNOR:'XNOR回路'
+  };
+
+  function inputLocalPositions(type){
+    const n = GATE_DEFS[type].inputs;
+    if(n === 2) return [[0,20],[0,40]];
+    if(n === 1) return [[0,30]];
+    return [];
+  }
+  function outputLocalPosition(type){
+    if(type === 'OUTPUT') return null;
+    return [90,30];
+  }
+
+  function gateShapeSVG(type, bodyClass, thinClass, bubbleClass, stubClass){
+    bodyClass = bodyClass || 'gate-body'; thinClass = thinClass || 'gate-body-thin';
+    bubbleClass = bubbleClass || 'gate-bubble'; stubClass = stubClass || 'stub';
+    switch(type){
+      case 'AND':
+        return `<path class="${bodyClass}" d="M17,10 H53 A20,20 0 0 1 53,50 H17 Z"/>
+                <line class="${stubClass}" x1="0" y1="20" x2="17" y2="20"/>
+                <line class="${stubClass}" x1="0" y1="40" x2="17" y2="40"/>
+                <line class="${stubClass}" x1="73" y1="30" x2="90" y2="30"/>`;
+      case 'OR':
+        return `<path class="${bodyClass}" d="M20,10 Q40,10 70,30 Q40,50 20,50 Q30,30 20,10 Z"/>
+                <line class="${stubClass}" x1="0" y1="20" x2="20" y2="20"/>
+                <line class="${stubClass}" x1="0" y1="40" x2="20" y2="40"/>
+                <line class="${stubClass}" x1="70" y1="30" x2="90" y2="30"/>`;
+      case 'XOR':
+        return `<path class="${thinClass}" d="M16,10 Q26,30 16,50"/>
+                <path class="${bodyClass}" d="M20,10 Q40,10 70,30 Q40,50 20,50 Q30,30 20,10 Z"/>
+                <line class="${stubClass}" x1="0" y1="20" x2="16" y2="20"/>
+                <line class="${stubClass}" x1="0" y1="40" x2="16" y2="40"/>
+                <line class="${stubClass}" x1="70" y1="30" x2="90" y2="30"/>`;
+      case 'NOT':
+        return `<path class="${bodyClass}" d="M17,10 L17,50 L63,30 Z"/>
+                <circle class="${bubbleClass}" cx="68" cy="30" r="5"/>
+                <line class="${stubClass}" x1="0" y1="30" x2="17" y2="30"/>
+                <line class="${stubClass}" x1="73" y1="30" x2="90" y2="30"/>`;
+      case 'NAND':
+        return `<path class="${bodyClass}" d="M17,10 H43 A20,20 0 0 1 43,50 H17 Z"/>
+                <circle class="${bubbleClass}" cx="68" cy="30" r="5"/>
+                <line class="${stubClass}" x1="0" y1="20" x2="17" y2="20"/>
+                <line class="${stubClass}" x1="0" y1="40" x2="17" y2="40"/>
+                <line class="${stubClass}" x1="73" y1="30" x2="90" y2="30"/>`;
+      case 'NOR':
+        return `<path class="${bodyClass}" d="M20,10 Q36,10 60,30 Q36,50 20,50 Q28,30 20,10 Z"/>
+                <circle class="${bubbleClass}" cx="65" cy="30" r="5"/>
+                <line class="${stubClass}" x1="0" y1="20" x2="20" y2="20"/>
+                <line class="${stubClass}" x1="0" y1="40" x2="20" y2="40"/>
+                <line class="${stubClass}" x1="70" y1="30" x2="90" y2="30"/>`;
+      case 'XNOR':
+        return `<path class="${thinClass}" d="M16,10 Q24,30 16,50"/>
+                <path class="${bodyClass}" d="M20,10 Q36,10 60,30 Q36,50 20,50 Q28,30 20,10 Z"/>
+                <circle class="${bubbleClass}" cx="65" cy="30" r="5"/>
+                <line class="${stubClass}" x1="0" y1="20" x2="16" y2="20"/>
+                <line class="${stubClass}" x1="0" y1="40" x2="16" y2="40"/>
+                <line class="${stubClass}" x1="70" y1="30" x2="90" y2="30"/>`;
+      default: return '';
+    }
+  }
+
+  // ---- panel① gate legend (static reference icons) ----
+  const legendWrap = document.getElementById('gateLegend');
+  GATE_ORDER.forEach(type => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    const svgEl = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svgEl.setAttribute('viewBox','0 0 90 60');
+    svgEl.innerHTML = gateShapeSVG(type, 'mini-body', 'mini-body', 'mini-bubble', 'mini-stub');
+    item.appendChild(svgEl);
+    const label = document.createElement('span');
+    label.textContent = DISPLAY_NAMES[type];
+    item.appendChild(label);
+    legendWrap.appendChild(item);
+  });
+
+  function computeGateOutput(type, vals){
+    switch(type){
+      case 'AND':  return vals.every(Boolean);
+      case 'OR':   return vals.some(Boolean);
+      case 'NOT':  return !vals[0];
+      case 'XOR':  return (vals.filter(Boolean).length % 2) === 1;
+      case 'NAND': return !vals.every(Boolean);
+      case 'NOR':  return !vals.some(Boolean);
+      case 'XNOR': return !((vals.filter(Boolean).length % 2) === 1);
+      case 'OUTPUT': return !!vals[0];
+      default: return false;
+    }
+  }
+
+  // ---------- board factory: each call creates one independent work space ----------
+  function createLogicBoard(boardId, svgId, frameId){
+    const board = document.getElementById(boardId);
+    const svg = document.getElementById(svgId);
+    const boardFrame = document.getElementById(frameId);
+
+    const state = { gates: [], wires: [] };
+    let nextId = 1, nextWireId = 1, placed = 0;
+    const counters = {};
+    let BOARD_W = 1000, BOARD_H = 640;
+    let boardScale = 1;
+    let wiring = null;
+
+    function updateBoardScale(){
+      let maxX = 1000, maxY = 640;
+      state.gates.forEach(g => {
+        maxX = Math.max(maxX, g.x + 90 + 20);
+        maxY = Math.max(maxY, g.y + 60 + 20);
+      });
+      BOARD_W = maxX; BOARD_H = maxY;
+      board.style.width = BOARD_W + 'px';
+      board.style.height = BOARD_H + 'px';
+      const availW = boardFrame.clientWidth || BOARD_W;
+      boardScale = Math.min(1, availW / BOARD_W);
+      board.style.transform = `scale(${boardScale})`;
+      boardFrame.style.height = Math.round(BOARD_H * boardScale) + 'px';
+    }
+    window.addEventListener('resize', updateBoardScale);
+
+    function getGate(id){ return state.gates.find(g => g.id === id); }
+
+    function simulate(){
+      const passes = state.gates.length + 3;
+      for(let p = 0; p < passes; p++){
+        for(const g of state.gates){
+          if(g.type === 'INPUT'){ g.value = !!g.switchOn; continue; }
+          const n = GATE_DEFS[g.type].inputs;
+          const vals = [];
+          for(let i = 0; i < n; i++){
+            const w = state.wires.find(w => w.to === g.id && w.toIndex === i);
+            vals[i] = w ? !!(getGate(w.from) && getGate(w.from).value) : false;
+          }
+          g.value = computeGateOutput(g.type, vals);
+        }
+      }
+    }
+
+    function addComponent(type, x, y){
+      const id = 'g' + (nextId++);
+      counters[type] = (counters[type] || 0) + 1;
+      const label = DISPLAY_NAMES[type] + '-' + counters[type];
+      if(x === undefined){
+        const cols = 8;
+        x = 20 + (placed % cols) * 150;
+        y = 60 + Math.floor(placed / cols) * 130;
+        placed++;
+      }
+      x = Math.max(0, Math.min(BOARD_W - 90, x));
+      y = Math.max(0, Math.min(BOARD_H - 60, y));
+      state.gates.push({ id, type, x, y, label, value:false, switchOn:false });
+      renderStructure(); simulate(); updateValues();
+    }
+
+    function deleteGate(id){
+      state.gates = state.gates.filter(g => g.id !== id);
+      state.wires = state.wires.filter(w => w.from !== id && w.to !== id);
+      renderStructure(); simulate(); updateValues();
+    }
+
+    function connectWire(fromId, toId, toIndex){
+      if(fromId === toId) return;
+      state.wires = state.wires.filter(w => !(w.to === toId && w.toIndex === toIndex));
+      state.wires.push({ id:'w'+(nextWireId++), from:fromId, to:toId, toIndex });
+      renderStructure(); simulate(); updateValues();
+    }
+
+    function deleteWire(id){
+      state.wires = state.wires.filter(w => w.id !== id);
+      renderStructure(); simulate(); updateValues();
+    }
+
+    function pinAbs(gate, kind, index){
+      if(kind === 'in'){
+        const pos = inputLocalPositions(gate.type)[index];
+        return [gate.x + pos[0], gate.y + pos[1]];
+      }
+      const pos = outputLocalPosition(gate.type);
+      return [gate.x + pos[0], gate.y + pos[1]];
+    }
+
+    function wirePathD(x1,y1,x2,y2){
+      const dx = Math.max(40, (x2 - x1) * 0.5);
+      return `M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}`;
+    }
+
+    function updateWirePaths(){
+      state.wires.forEach(w => {
+        const src = getGate(w.from), dst = getGate(w.to);
+        if(!src || !dst) return;
+        const [x1,y1] = pinAbs(src,'out');
+        const [x2,y2] = pinAbs(dst,'in',w.toIndex);
+        const d = wirePathD(x1,y1,x2,y2);
+        svg.querySelectorAll(`[data-wire="${w.id}"]`).forEach(el => el.setAttribute('d', d));
+      });
+    }
+
+    function renderStructure(){
+      svg.innerHTML = '';
+      state.wires.forEach(w => {
+        const src = getGate(w.from), dst = getGate(w.to);
+        if(!src || !dst) return;
+        const [x1,y1] = pinAbs(src,'out');
+        const [x2,y2] = pinAbs(dst,'in',w.toIndex);
+        const d = wirePathD(x1,y1,x2,y2);
+
+        const hit = document.createElementNS('http://www.w3.org/2000/svg','path');
+        hit.setAttribute('d', d);
+        hit.setAttribute('data-wire', w.id);
+        hit.setAttribute('stroke','transparent');
+        hit.setAttribute('stroke-width','16');
+        hit.setAttribute('fill','none');
+        hit.style.pointerEvents = 'stroke';
+        hit.style.cursor = 'pointer';
+        hit.addEventListener('click', () => deleteWire(w.id));
+        svg.appendChild(hit);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg','path');
+        line.setAttribute('d', d);
+        line.setAttribute('class','wire lo');
+        line.setAttribute('data-wire', w.id);
+        svg.appendChild(line);
+      });
+
+      board.querySelectorAll('.comp').forEach(el => el.remove());
+
+      state.gates.forEach(g => {
+        const div = document.createElement('div');
+        div.className = 'comp';
+        div.dataset.id = g.id;
+        div.style.left = g.x + 'px';
+        div.style.top = g.y + 'px';
+
+        const label = document.createElement('div');
+        label.className = 'comp-label';
+        label.textContent = g.label;
+        div.appendChild(label);
+
+        const del = document.createElement('button');
+        del.className = 'comp-del';
+        del.type = 'button';
+        del.textContent = '×';
+        del.title = '削除';
+        del.addEventListener('click', (e) => { e.stopPropagation(); deleteGate(g.id); });
+        div.appendChild(del);
+
+        if(g.type === 'INPUT'){
+          const wrap = document.createElement('div');
+          wrap.className = 'switch-wrap';
+          const sw = document.createElement('div');
+          sw.className = 'switch' + (g.switchOn ? ' on' : '');
+          sw.tabIndex = 0;
+          sw.innerHTML = '<div class="knob"></div>';
+          sw.addEventListener('click', (e) => {
+            e.stopPropagation();
+            g.switchOn = !g.switchOn;
+            simulate(); updateValues();
+          });
+          sw.addEventListener('keydown', (e) => {
+            if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); sw.click(); }
+          });
+          const val = document.createElement('div');
+          val.className = 'switch-val';
+          val.textContent = g.switchOn ? '1' : '0';
+          wrap.appendChild(sw); wrap.appendChild(val);
+          div.appendChild(wrap);
+        } else if(g.type === 'OUTPUT'){
+          const wrap = document.createElement('div');
+          wrap.className = 'led-wrap';
+          const led = document.createElement('div');
+          led.className = 'led';
+          const ledVal = document.createElement('div');
+          ledVal.className = 'led-val';
+          ledVal.textContent = g.value ? '1' : '0';
+          wrap.appendChild(led); wrap.appendChild(ledVal);
+          div.appendChild(wrap);
+        } else {
+          const shapeSvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+          shapeSvg.setAttribute('viewBox','0 0 90 60');
+          shapeSvg.setAttribute('class','comp-shape');
+          shapeSvg.innerHTML = gateShapeSVG(g.type);
+          div.appendChild(shapeSvg);
+        }
+
+        inputLocalPositions(g.type).forEach((pos, i) => {
+          const pin = document.createElement('div');
+          pin.className = 'pin';
+          pin.dataset.gate = g.id; pin.dataset.kind = 'in'; pin.dataset.index = i;
+          pin.style.left = pos[0] + 'px'; pin.style.top = pos[1] + 'px';
+          pin.tabIndex = 0;
+          div.appendChild(pin);
+        });
+        const outPos = outputLocalPosition(g.type);
+        if(outPos){
+          const pin = document.createElement('div');
+          pin.className = 'pin';
+          pin.dataset.gate = g.id; pin.dataset.kind = 'out';
+          pin.style.left = outPos[0] + 'px'; pin.style.top = outPos[1] + 'px';
+          pin.tabIndex = 0;
+          div.appendChild(pin);
+        }
+
+        board.appendChild(div);
+      });
+
+      attachDragHandlers();
+      attachPinHandlers();
+      updateBoardScale();
+    }
+
+    function updateValues(){
+      board.querySelectorAll('.pin').forEach(pin => {
+        const g = getGate(pin.dataset.gate);
+        if(!g) return;
+        let val;
+        if(pin.dataset.kind === 'out'){
+          val = !!g.value;
+        } else {
+          const idx = Number(pin.dataset.index);
+          const w = state.wires.find(w => w.to === g.id && w.toIndex === idx);
+          val = w ? !!(getGate(w.from) && getGate(w.from).value) : false;
+        }
+        pin.classList.toggle('hi', val);
+      });
+      state.wires.forEach(w => {
+        const src = getGate(w.from);
+        const on = !!(src && src.value);
+        svg.querySelectorAll(`.wire[data-wire="${w.id}"]`).forEach(el => {
+          el.classList.toggle('hi', on);
+          el.classList.toggle('lo', !on);
+        });
+      });
+      state.gates.forEach(g => {
+        const el = board.querySelector(`.comp[data-id="${g.id}"]`);
+        if(!el) return;
+        if(g.type === 'INPUT'){
+          const sw = el.querySelector('.switch');
+          const val = el.querySelector('.switch-val');
+          if(sw) sw.classList.toggle('on', !!g.switchOn);
+          if(val) val.textContent = g.switchOn ? '1' : '0';
+        } else if(g.type === 'OUTPUT'){
+          const led = el.querySelector('.led');
+          if(led) led.classList.toggle('hi', !!g.value);
+          const ledVal = el.querySelector('.led-val');
+          if(ledVal) ledVal.textContent = g.value ? '1' : '0';
+        }
+      });
+    }
+
+    function attachDragHandlers(){
+      board.querySelectorAll('.comp').forEach(el => {
+        el.addEventListener('pointerdown', (e) => {
+          if(e.target.closest('.pin') || e.target.closest('.comp-del') || e.target.closest('.switch')) return;
+          const id = el.dataset.id;
+          const g = getGate(id);
+          const boardRect = board.getBoundingClientRect();
+          const offX = (e.clientX - boardRect.left) / boardScale - g.x;
+          const offY = (e.clientY - boardRect.top) / boardScale - g.y;
+          el.setPointerCapture(e.pointerId);
+
+          function onMove(ev){
+            const r = board.getBoundingClientRect();
+            let nx = (ev.clientX - r.left) / boardScale - offX;
+            let ny = (ev.clientY - r.top) / boardScale - offY;
+            nx = Math.max(0, Math.min(BOARD_W - 90, nx));
+            ny = Math.max(0, Math.min(BOARD_H - 60, ny));
+            g.x = nx; g.y = ny;
+            el.style.left = nx + 'px'; el.style.top = ny + 'px';
+            updateWirePaths();
+          }
+          function onUp(){
+            el.removeEventListener('pointermove', onMove);
+            el.removeEventListener('pointerup', onUp);
+          }
+          el.addEventListener('pointermove', onMove);
+          el.addEventListener('pointerup', onUp);
+        });
+      });
+    }
+
+    function attachPinHandlers(){
+      board.querySelectorAll('.pin').forEach(pin => {
+        pin.addEventListener('pointerdown', (e) => {
+          e.stopPropagation();
+          if(pin.dataset.kind !== 'out') return;
+          startWiring(pin.dataset.gate);
+        });
+        pin.addEventListener('pointerup', (e) => {
+          e.stopPropagation();
+          if(!wiring) return;
+          if(pin.dataset.kind === 'in'){
+            connectWire(wiring.fromId, pin.dataset.gate, Number(pin.dataset.index));
+          }
+          endWiring();
+        });
+      });
+    }
+
+    function startWiring(fromId){
+      const src = getGate(fromId);
+      const [x1,y1] = pinAbs(src,'out');
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('class','wire-temp');
+      svg.appendChild(path);
+
+      function onMove(ev){
+        const r = board.getBoundingClientRect();
+        const x2 = (ev.clientX - r.left) / boardScale, y2 = (ev.clientY - r.top) / boardScale;
+        path.setAttribute('d', wirePathD(x1, y1, x2, y2));
+      }
+      function onUp(){ endWiring(); }
+
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+      wiring = { fromId, path, onMove, onUp };
+    }
+
+    function endWiring(){
+      if(!wiring) return;
+      window.removeEventListener('pointermove', wiring.onMove);
+      window.removeEventListener('pointerup', wiring.onUp);
+      if(wiring.path) wiring.path.remove();
+      wiring = null;
+    }
+
+    function isEmpty(){ return state.gates.length === 0; }
+
+    function clearAll(){
+      state.gates = []; state.wires = []; placed = 0;
+      for(const k in counters) counters[k] = 0;
+      renderStructure(); simulate(); updateValues();
+    }
+
+    // defs = { gates:[{type,x,y,label}], wires:[[fromIndex,toIndex,toInputIndex], ...] }
+    function loadCircuit(defs){
+      state.gates = []; state.wires = []; nextId = 1; nextWireId = 1; placed = 0;
+      for(const k in counters) counters[k] = 0;
+
+      const ids = defs.gates.map(g => {
+        const id = 'g' + (nextId++);
+        counters[g.type] = (counters[g.type] || 0) + 1;
+        state.gates.push({
+          id, type: g.type, x: g.x, y: g.y,
+          label: g.label || (DISPLAY_NAMES[g.type] + '-' + counters[g.type]),
+          value:false, switchOn:false
+        });
+        return id;
+      });
+      defs.wires.forEach(([fromIdx, toIdx, toIndex]) => {
+        state.wires.push({ id:'w'+(nextWireId++), from: ids[fromIdx], to: ids[toIdx], toIndex });
+      });
+
+      renderStructure(); simulate(); updateValues();
+      board.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+
+    renderStructure(); simulate(); updateValues();
+
+    return { addComponent, clearAll, loadCircuit, isEmpty };
+  }
+
+  // click "全消去" to show a small popup with "はい" / "いいえ" buttons.
+  // No timer — it stays until the user picks one. Avoids window.confirm(),
+  // which can be silently blocked in sandboxed/embedded preview contexts.
+  function wireClearButton(btn, ctrl){
+    let popup = null;
+    function closePopup(){
+      if(popup){ popup.remove(); popup = null; }
+    }
+    btn.addEventListener('click', () => {
+      if(ctrl.isEmpty()) return;
+      if(popup) return;
+      popup = document.createElement('span');
+      popup.className = 'clear-confirm-popup';
+      popup.innerHTML = `<span>⚠️ 本当に消去する？</span>
+        <button type="button" class="yes">はい</button>
+        <button type="button" class="no">いいえ</button>`;
+      btn.insertAdjacentElement('afterend', popup);
+      popup.querySelector('.yes').addEventListener('click', () => {
+        closePopup();
+        ctrl.clearAll();
+      });
+      popup.querySelector('.no').addEventListener('click', closePopup);
+    });
+  }
+
+  // ---------- ② free-build work space ----------
+  const board2Ctrl = createLogicBoard('board2', 'wireLayer2', 'boardFrame2');
+  document.querySelectorAll('[data-add]').forEach(btn => {
+    btn.addEventListener('click', () => board2Ctrl.addComponent(btn.dataset.add));
+  });
+  wireClearButton(document.getElementById('clearAll'), board2Ctrl);
+
+  // ---------- ③ half-adder / full-adder work space ----------
+  const board3Ctrl = createLogicBoard('board3', 'wireLayer3', 'boardFrame3');
+  document.querySelectorAll('[data-add3]').forEach(btn => {
+    btn.addEventListener('click', () => board3Ctrl.addComponent(btn.dataset.add3));
+  });
+  wireClearButton(document.getElementById('clearAll3'), board3Ctrl);
+
+  const HALF_ADDER_NOXOR = {
+    gates: [
+      {type:'INPUT', x:20, y:60, label:'スイッチ-A'},
+      {type:'INPUT', x:20, y:220, label:'スイッチ-B'},
+      {type:'AND', x:150, y:60, label:'AND回路-1'},
+      {type:'OR', x:150, y:220, label:'OR回路-1'},
+      {type:'NOT', x:280, y:220, label:'NOT回路-1'},
+      {type:'AND', x:410, y:220, label:'AND回路-2'},
+      {type:'OUTPUT', x:540, y:60, label:'LED-Cout'},
+      {type:'OUTPUT', x:540, y:220, label:'LED-Sum'}
+    ],
+    wires: [[0,2,0],[1,2,1],[0,3,0],[1,3,1],[2,4,0],[3,5,0],[4,5,1],[2,6,0],[5,7,0]]
+  };
+
+  const HALF_ADDER_XOR = {
+    gates: [
+      {type:'INPUT', x:40, y:60, label:'スイッチ-A'},
+      {type:'INPUT', x:40, y:220, label:'スイッチ-B'},
+      {type:'AND', x:220, y:60, label:'AND回路-1'},
+      {type:'XOR', x:220, y:220, label:'XOR回路-1'},
+      {type:'OUTPUT', x:400, y:60, label:'LED-Carry'},
+      {type:'OUTPUT', x:400, y:220, label:'LED-Sum'}
+    ],
+    wires: [[0,3,0],[1,3,1],[0,2,0],[1,2,1],[3,5,0],[2,4,0]]
+  };
+
+  const FULL_ADDER_NOXOR = {
+    gates: [
+      {type:'INPUT', x:20, y:40, label:'スイッチ-A'},
+      {type:'INPUT', x:20, y:200, label:'スイッチ-B'},
+      {type:'INPUT', x:20, y:420, label:'スイッチ-Cin'},
+      {type:'AND', x:150, y:40, label:'AND回路-1'},
+      {type:'OR', x:150, y:200, label:'OR回路-1'},
+      {type:'NOT', x:280, y:200, label:'NOT回路-1'},
+      {type:'AND', x:410, y:200, label:'AND回路-2'},
+      {type:'OR', x:540, y:320, label:'OR回路-2'},
+      {type:'AND', x:540, y:420, label:'AND回路-3'},
+      {type:'NOT', x:670, y:420, label:'NOT回路-2'},
+      {type:'AND', x:800, y:320, label:'AND回路-4'},
+      {type:'OR', x:800, y:120, label:'OR回路-3'},
+      {type:'OUTPUT', x:930, y:120, label:'LED-Cout'},
+      {type:'OUTPUT', x:930, y:320, label:'LED-Sum'}
+    ],
+    wires: [
+      [0,3,0],[1,3,1],[0,4,0],[1,4,1],[3,5,0],
+      [4,6,0],[5,6,1],[6,7,0],[2,7,1],[6,8,0],[2,8,1],
+      [8,9,0],[7,10,0],[9,10,1],[3,11,0],[8,11,1],
+      [11,12,0],[10,13,0]
+    ]
+  };
+
+  const FULL_ADDER_XOR = {
+    gates: [
+      {type:'INPUT', x:20, y:40, label:'スイッチ-A'},
+      {type:'INPUT', x:20, y:180, label:'スイッチ-B'},
+      {type:'INPUT', x:20, y:320, label:'スイッチ-Cin'},
+      {type:'XOR', x:150, y:40, label:'XOR回路-1'},
+      {type:'AND', x:150, y:180, label:'AND回路-1'},
+      {type:'XOR', x:280, y:40, label:'XOR回路-2'},
+      {type:'AND', x:280, y:320, label:'AND回路-2'},
+      {type:'OR', x:410, y:250, label:'OR回路-1'},
+      {type:'OUTPUT', x:540, y:90, label:'LED-Cout'},
+      {type:'OUTPUT', x:540, y:320, label:'LED-Sum'}
+    ],
+    wires: [
+      [0,3,0],[1,3,1],[0,4,0],[1,4,1],
+      [3,5,0],[2,5,1],[3,6,0],[2,6,1],
+      [4,7,0],[6,7,1],[7,8,0],[5,9,0]
+    ]
+  };
+
+  document.getElementById('loadExample').addEventListener('click', () => board3Ctrl.loadCircuit(HALF_ADDER_NOXOR));
+  document.getElementById('loadExampleXor').addEventListener('click', () => board3Ctrl.loadCircuit(HALF_ADDER_XOR));
+  document.getElementById('loadFullAdder').addEventListener('click', () => board3Ctrl.loadCircuit(FULL_ADDER_NOXOR));
+  document.getElementById('loadFullAdderXor').addEventListener('click', () => board3Ctrl.loadCircuit(FULL_ADDER_XOR));
+})();
+</script>
+</body>
+</html>
