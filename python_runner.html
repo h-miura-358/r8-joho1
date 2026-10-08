@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pythonコード実行ツール</title>
-<script src="https://cdn.jsdelivr.net/pyodide/v314.0.2/full/pyodide.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.6/full/pyodide.js"></script>
 <style>
   body { font-family: "Yu Gothic", sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; }
   .container { max-width: 1100px; margin: auto; }
@@ -26,6 +26,24 @@
   @media (max-width: 700px) { .three-col { grid-template-columns: 1fr !important; } }
 
   .status-line { font-size:14px; color:#888; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .status-bar-wrap {
+    background:#e8f5e9; border:1px solid #27ae60; border-radius:10px; padding:14px 16px;
+    margin-bottom:14px; display:none;
+  }
+  .status-bar-wrap.loading { display:block; }
+  .status-bar-label { font-size:14px; color:#1a5c2a; font-weight:bold; margin-bottom:8px; }
+  .status-bar-track { background:#c8e6c9; border-radius:999px; height:10px; overflow:hidden; }
+  .status-bar-fill {
+    height:10px; background:#27ae60; border-radius:999px; width:0%;
+    transition:width .4s ease;
+    animation:indeterminate 1.4s ease-in-out infinite;
+  }
+  @keyframes indeterminate {
+    0%   { margin-left:0%; width:30%; }
+    50%  { margin-left:50%; width:40%; }
+    100% { margin-left:100%; width:0%; }
+  }
+  .status-bar-fill.done { animation:none; width:100%; }
 
   .split-layout { display:flex; gap:24px; align-items:flex-start; }
   .split-left { flex:0 0 420px; }
@@ -126,12 +144,18 @@
       <div class="split-left">
         <div class="status-line">
           <span class="status-dot" id="statusDot"></span>
-          <span id="statusText">Pythonを起動しています…（初回は少し時間がかかります）</span>
+          <span id="statusText">Pythonを起動しています…（初回は数秒かかります）</span>
+        </div>
+        <div class="status-bar-wrap loading" id="statusBarWrap">
+          <div class="status-bar-label" id="statusBarLabel">🐍 Pythonを読み込んでいます…少々お待ちください</div>
+          <div class="status-bar-track">
+            <div class="status-bar-fill" id="statusBarFill"></div>
+          </div>
         </div>
 
         <p style="margin:0 0 8px; font-weight:bold; color:#555;">📝 Pythonコード</p>
-        <textarea id="codeEditor" spellcheck="false">namae = "たろう"
-print(f"こんにちは、{namae}さん")</textarea>
+        <textarea id="codeEditor" spellcheck="false">namae = 'たろう'
+print('こんにちは、' + namae + 'さん')</textarea>
 
         <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
           <button id="translateBtn" disabled>🇯🇵 日本語に翻訳する</button>
@@ -139,7 +163,6 @@ print(f"こんにちは、{namae}さん")</textarea>
         </div>
         <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
           <button id="skipBtn" class="ghost" style="display:none;">⏭ 最後まで飛ばす</button>
-          <button id="loadHardBtn" class="ghost">📥（発展）うるう年判定の例を読み込む</button>
         </div>
       </div>
 
@@ -180,7 +203,6 @@ print(f"こんにちは、{namae}さん")</textarea>
         <li><code>namae</code> を自分の名前に変えて実行してみよう</li>
         <li>2行目のメッセージを書き換えてみよう</li>
         <li>わざと文字を消してみて、どんなエラーが出るか見てみよう</li>
-        <li>慣れてきたら「（発展）うるう年判定の例を読み込む」にも挑戦しよう</li>
       </ul>
     </div>
   </div>
@@ -190,9 +212,24 @@ print(f"こんにちは、{namae}さん")</textarea>
 (function(){
   "use strict";
 
+  // ---- All DOM lookups first, so nothing is referenced before it is declared ----
   const statusDot = document.getElementById('statusDot');
   const statusText = document.getElementById('statusText');
+  const statusBarWrap = document.getElementById('statusBarWrap');
+  const statusBarLabel = document.getElementById('statusBarLabel');
+  const statusBarFill = document.getElementById('statusBarFill');
   const codeEditor = document.getElementById('codeEditor');
+  const runBtn = document.getElementById('runBtn');
+  const skipBtn = document.getElementById('skipBtn');
+  const execLogArea = document.getElementById('execLogArea');
+  const outputArea = document.getElementById('outputArea');
+  const resultBox = document.getElementById('resultBox');
+  const varsTableBody = document.querySelector('#varsTable tbody');
+  const translateBtn = document.getElementById('translateBtn');
+  const translateArea = document.getElementById('translateArea');
+
+  let pyodide = null;
+  let session = 0;
 
   codeEditor.addEventListener('keydown', (e) => {
     if(e.key !== 'Tab') return;
@@ -230,37 +267,6 @@ print(f"こんにちは、{namae}さん")</textarea>
     codeEditor.selectionEnd = lineStart + newSegment.length;
   });
 
-  loadHardBtn.addEventListener('click', () => {
-    codeEditor.value = `nen = 2024
-
-if nen % 4 == 0:
-    if nen % 100 == 0:
-        if nen % 400 == 0:
-            kekka = "うるう年"
-        else:
-            kekka = "うるう年ではない"
-    else:
-        kekka = "うるう年"
-else:
-    kekka = "うるう年ではない"
-
-print(f"{nen}年は{kekka}です")`;
-    codeEditor.scrollIntoView({behavior:'smooth', block:'center'});
-  });
-
-  const runBtn = document.getElementById('runBtn');
-  const skipBtn = document.getElementById('skipBtn');
-  const execLogArea = document.getElementById('execLogArea');
-  const outputArea = document.getElementById('outputArea');
-  const resultBox = document.getElementById('resultBox');
-  const varsTableBody = document.querySelector('#varsTable tbody');
-  const translateBtn = document.getElementById('translateBtn');
-  const loadHardBtn = document.getElementById('loadHardBtn');
-  const translateArea = document.getElementById('translateArea');
-
-  let pyodide = null;
-  let session = 0;
-
   // Python-side wrapper: runs the student's code under sys.settrace so we can
   // collect a line-by-line trace (line number, local variables, any output
   // produced by that line) without needing to guess/parse anything on the JS side.
@@ -281,7 +287,10 @@ def _flush_output_to_last():
             _out_buffer.seek(0)
             _out_buffer.truncate(0)
 
+_STUDENT_FILENAME = '<あなたのコード>'
 def _tracer(frame, event, arg):
+    if frame.f_code.co_filename != _STUDENT_FILENAME:
+        return _tracer
     if event == 'line':
         _flush_output_to_last()
         _step_count[0] += 1
@@ -303,10 +312,20 @@ sys.stdout = _out_buffer
 sys.settrace(_tracer)
 _user_ns = {'__builtins__': __builtins__}
 try:
-    _code_obj = compile(_student_code, '<あなたのコード>', 'exec')
+    _code_obj = compile(_student_code, _STUDENT_FILENAME, 'exec')
     exec(_code_obj, _user_ns)
 except Exception as _e:
-    _error_message = f'{type(_e).__name__}: {_e}'
+    _line_no = getattr(_e, 'lineno', None)
+    if not _line_no:
+        _tb = _e.__traceback__
+        while _tb:
+            if _tb.tb_frame.f_code.co_filename == _STUDENT_FILENAME:
+                _line_no = _tb.tb_lineno
+            _tb = _tb.tb_next
+    if _line_no:
+        _error_message = f'{_line_no}行目\\n{type(_e).__name__}: {_e}'
+    else:
+        _error_message = f'{type(_e).__name__}: {_e}'
 finally:
     sys.settrace(None)
     _flush_output_to_last()
@@ -339,16 +358,25 @@ def _fallback(node):
     except Exception:
         return '（複雑な式）'
 
-def _expr_ja(node):
+def _flatten_add(node):
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        return _flatten_add(node.left) + _flatten_add(node.right)
+    return [node]
+
+def _expr_ja_impl(node):
     if isinstance(node, ast.Constant):
         if isinstance(node.value, str):
-            return f'"{node.value}"'
+            return repr(node.value)
         return str(node.value)
     if isinstance(node, ast.Name):
         return node.id
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub):
         return f'-{_expr_ja(node.operand)}'
     if isinstance(node, ast.BinOp):
+        if isinstance(node.op, ast.Add):
+            parts = _flatten_add(node)
+            if any((isinstance(p, ast.Constant) and isinstance(p.value, str)) or isinstance(p, ast.JoinedStr) for p in parts):
+                return ' と '.join(_expr_ja(p) for p in parts) + ' をつなげたもの'
         l = _expr_ja(node.left); r = _expr_ja(node.right)
         if isinstance(node.op, ast.Add): return f'{l} と {r} を足したもの'
         if isinstance(node.op, ast.Sub): return f'{l} から {r} を引いたもの'
@@ -388,7 +416,7 @@ def _expr_ja(node):
                 parts.append(str(v.value))
             elif isinstance(v, ast.FormattedValue):
                 parts.append('{' + _expr_ja(v.value) + '}')
-        return '"' + ''.join(parts) + '"'
+        return "'" + ''.join(parts) + "'"
     if isinstance(node, ast.List):
         return '[' + ', '.join(_expr_ja(e) for e in node.elts) + ']'
     return _fallback(node)
@@ -420,7 +448,7 @@ def _if_chain_ja(node, depth, is_first=True):
                 lines += _stmt_ja(n, depth + 1)
     return lines
 
-def _stmt_ja(node, depth):
+def _stmt_ja_impl(node, depth):
     if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
         return [(node.lineno, depth, f'変数「{node.targets[0].id}」に {_expr_ja(node.value)} を代入する')]
     if isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
@@ -464,6 +492,21 @@ def _stmt_ja(node, depth):
     except Exception:
         return [(node.lineno, depth, '（簡易版では未対応の書き方です）')]
 
+def _expr_ja(node):
+    try:
+        return _expr_ja_impl(node)
+    except Exception:
+        return _fallback(node)
+
+def _stmt_ja(node, depth):
+    try:
+        return _stmt_ja_impl(node, depth)
+    except Exception:
+        try:
+            return [(node.lineno, depth, '（簡易版では未対応の書き方）' + ast.unparse(node))]
+        except Exception:
+            return [(getattr(node, 'lineno', 1), depth, '（簡易版では未対応の書き方です）')]
+
 def _translate(code):
     tree = ast.parse(code)
     lines = []
@@ -504,14 +547,42 @@ _json.dumps({'lines': _t_result, 'error': _t_error}, ensure_ascii=False)
   async function init(){
     try{
       pyodide = await loadPyodide();
+      // loading complete
+      statusBarFill.classList.add('done');
+      statusBarLabel.textContent = '✅ Pythonの準備が完了しました！';
+      setTimeout(() => { statusBarWrap.style.display = 'none'; }, 1400);
+
       statusDot.classList.add('ready');
       statusText.textContent = 'Python の準備ができました。「実行する」を押してください。';
       runBtn.disabled = false;
       translateBtn.disabled = false;
     } catch(err){
-      statusText.textContent = 'Pythonの読み込みに失敗しました。ネットワーク接続を確認してページを再読み込みしてください。';
+      statusBarFill.style.animation = 'none';
+      statusBarFill.style.background = '#e74c3c';
+      statusBarFill.classList.add('done');
+      statusBarLabel.textContent = '❌ 読み込みに失敗しました。ネットワーク接続を確認してページを再読み込みしてください。';
+      statusBarWrap.style.borderColor = '#e74c3c';
+      statusBarWrap.style.background = '#fdecea';
+      statusBarLabel.style.color = '#c0392b';
+      statusText.textContent = 'Pythonの読み込みに失敗しました。';
       console.error(err);
     }
+  }
+
+  // Python-style repr of a value (strings in single quotes, True/False/None)
+  function pyRepr(v){
+    if(v === null || v === undefined) return 'None';
+    if(typeof v === 'boolean') return v ? 'True' : 'False';
+    if(typeof v === 'number') return String(v);
+    if(typeof v === 'string'){
+      const q = (v.includes("'") && !v.includes('"')) ? '"' : "'";
+      let s = v.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
+      if(q === "'") s = s.replace(/'/g, "\\'");
+      return q + s + q;
+    }
+    if(Array.isArray(v)) return '[' + v.map(pyRepr).join(', ') + ']';
+    if(typeof v === 'object') return '{' + Object.keys(v).map(k => pyRepr(k) + ': ' + pyRepr(v[k])).join(', ') + '}';
+    return String(v);
   }
 
   function renderVarsTable(vars){
@@ -523,7 +594,7 @@ _json.dumps({'lines': _t_result, 'error': _t_error}, ensure_ascii=False)
     }
     keys.forEach(k => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${k}</td><td>${JSON.stringify(vars[k])}</td>`;
+      tr.innerHTML = `<td>${escapeHtml(k)}</td><td>${escapeHtml(pyRepr(vars[k]))}</td>`;
       varsTableBody.appendChild(tr);
     });
   }
@@ -532,7 +603,7 @@ _json.dumps({'lines': _t_result, 'error': _t_error}, ensure_ascii=False)
     const changed = [];
     Object.keys(cur).forEach(k => {
       if(!prev || JSON.stringify(prev[k]) !== JSON.stringify(cur[k])){
-        changed.push(`${k} = ${JSON.stringify(cur[k])}`);
+        changed.push(`${k} = ${pyRepr(cur[k])}`);
       }
     });
     return changed;
@@ -624,7 +695,7 @@ _json.dumps({'lines': _t_result, 'error': _t_error}, ensure_ascii=False)
       if(execLogArea.children.length === 0) clearArea(execLogArea, '実行できる行がありませんでした。');
       if(outputArea.children.length === 0) clearArea(outputArea, '（出力はありませんでした）');
       if(data.error){
-        showResult('❌ エラーが発生しました:\n' + data.error, true);
+        showResult('❌ エラーが発生しました\n' + data.error, true);
       } else {
         showResult('✅ 実行が完了しました(実行ログ・出力・下の変数の最終状態を確認しよう)', false);
       }
@@ -662,7 +733,7 @@ _json.dumps({'lines': _t_result, 'error': _t_error}, ensure_ascii=False)
       jaCell.className = 't-ja';
       const entries = byLine[lineNo];
       jaCell.innerHTML = entries
-        ? entries.map(e => '　'.repeat(e.depth) + escapeHtml(e.text)).join('<br>')
+        ? entries.map(e => ' '.repeat(e.depth) + escapeHtml(e.text)).join('<br>')
         : '&nbsp;';
 
       row.appendChild(codeCell);
