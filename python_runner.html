@@ -11,10 +11,7 @@
   h1 { text-align: center; }
   .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
   .panel h2 { margin-top: 0; }
-  .info-box { background: #eef5ff; padding: 14px 18px; border-radius: 10px; margin-top: 12px; }
-  .try-box { background: #e8f5e9; padding: 14px 18px; border-radius: 10px; margin-top: 10px; }
-  .task-box { background: #fff8e1; border-left: 5px solid #f9a825; padding: 14px 18px; border-radius: 10px; margin-bottom: 16px; }
-  .task-box h3 { margin: 0 0 8px; color: #f57f17; }
+  .info-box { background: #eef5ff; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 8px; }
   button { padding: 10px 20px; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; background: #4a90e2; color: white; }
   button:hover:not(:disabled) { opacity: 0.9; }
   button:disabled { background:#ccc; cursor:not-allowed; }
@@ -23,7 +20,16 @@
   td { padding: 10px 14px; border-bottom: 1px solid #ddd; text-align: center; }
   tr:nth-child(even) td { background: #f0f7ff; }
   code { background:#eef2f5; padding:1px 5px; border-radius:4px; }
-  @media (max-width: 700px) { .three-col { grid-template-columns: 1fr !important; } }
+
+  /* ① 使い方用の 3カラムレイアウト */
+  .three-col {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 768px) {
+    .three-col { grid-template-columns: 1fr; }
+  }
 
   .status-line { font-size:14px; color:#888; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
   .status-bar-wrap {
@@ -55,30 +61,82 @@
   .status-dot { width:10px; height:10px; border-radius:50%; background:#e67e22; }
   .status-dot.ready { background:#27ae60; }
 
-  #codeEditor {
-    width:100%; box-sizing:border-box; min-height:520px; font-family:'Consolas','Menlo',monospace;
-    font-size:14.5px; line-height:1.6; padding:14px; border:1px solid #ccc; border-radius:8px;
-    background:#fbfcfe; tab-size:4; white-space:pre; resize:vertical;
+  /* 行番号付きコードエディタ用スタイル */
+  .editor-container {
+    display: flex;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fbfcfe;
+    overflow: hidden;
+    height: 450px;
   }
+  .line-numbers {
+    width: 28px;
+    background: #f0f2f5;
+    color: #333;
+    font-family: 'Consolas', 'Menlo', monospace;
+    font-size: 14.5px;
+    line-height: 1.6;
+    padding: 14px 0;
+    text-align: right;
+    user-select: none;
+    box-sizing: border-box;
+    border-right: 1px solid #e0e0e0;
+    overflow: hidden;
+  }
+  .line-numbers span {
+    display: block;
+    padding-right: 6px;
+  }
+  #codeEditor {
+    flex: 1;
+    border: none;
+    outline: none;
+    height: 100%;
+    font-family: 'Consolas', 'Menlo', monospace;
+    font-size: 14.5px;
+    line-height: 1.6;
+    padding: 14px;
+    background: transparent;
+    tab-size: 4;
+    white-space: pre;
+    resize: none;
+    box-sizing: border-box;
+    overflow-y: auto;
+  }
+
+  /* タブ切替デザイン */
+  .tab-header { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 12px; }
+  .tab-btn {
+    padding: 10px 16px; font-weight: bold; background: none; color: #666; border: none;
+    border-bottom: 3px solid transparent; cursor: pointer; border-radius: 0; font-size: 14.5px;
+  }
+  .tab-btn:hover { color: #4a90e2; }
+  .tab-btn.active { color: #4a90e2; border-bottom-color: #4a90e2; background: none; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
 
   .log-area {
     font-family:monospace; font-size:13.5px; background:#0f1c14; color:#d7f5e2; border-radius:8px;
-    padding:12px 16px; min-height:220px; max-height:360px; overflow-y:auto; margin-bottom:14px; white-space:pre-wrap;
+    padding:12px 16px; min-height:80px; max-height:200px; overflow-y:auto; margin-bottom:14px; white-space:pre-wrap; word-break: break-all;
   }
+  .log-area.small { min-height:50px; max-height:120px; }
   .log-area .stdout-line { color:#d7f5e2; }
   .log-area .placeholder { color:#7f9a89; }
 
+  /* 実行結果ボックス */
   .result-box {
-    background:#e8f5e9; border:2px solid #27ae60; border-radius:10px; padding:14px 18px; font-size:15px;
-    color:#1a5c2a; margin-top:10px; display:none; white-space:pre-wrap; font-family:monospace;
+    background:#e8f5e9; border:2px solid #27ae60; border-radius:10px; padding:12px 16px; font-size:14.5px;
+    color:#1a5c2a; margin-top:12px; display:none; white-space:pre-wrap; word-break: break-all; font-family:monospace;
   }
   .result-box.error { background:#fdecea; border-color:#e74c3c; color:#c0392b; }
 
-  .translate-grid { border:1px solid #ddd; border-radius:8px; overflow:hidden; margin-bottom:14px; max-height:520px; overflow-y:auto; }
-  .t-row { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  /* 翻訳表示テーブル */
+  .translate-grid { border:1px solid #ddd; border-radius:8px; overflow-x:auto; margin-bottom:14px; max-height:480px; overflow-y:auto; }
+  .t-row { display:grid; grid-template-columns: 1fr 1fr; }
   .t-row:nth-child(even) { background:#f0f7ff; }
-  .t-row > div { padding:5px 12px; font-size:13.5px; }
-  .t-code { font-family:'Consolas','Menlo',monospace; white-space:pre; color:#333; border-right:1px solid #e3e8ee; }
+  .t-row > div { padding:8px 12px; font-size:13.5px; word-break: break-all; box-sizing: border-box; }
+  .t-code { font-family:'Consolas','Menlo',monospace; white-space:pre-wrap; color:#333; border-right:1px solid #e3e8ee; }
   .t-ja { color:#2c3e9e; line-height:1.6; }
   .t-ja .placeholder { color:#999; }
 </style>
@@ -102,19 +160,19 @@
   <!-- ① 使い方 -->
   <div class="panel">
     <h2>① 使い方</h2>
-    <div style="display:flex; flex-direction:column; gap:16px;">
+    <div class="three-col">
       <div style="background:#f0f7ff; border-left:4px solid #4a90e2; padding:16px; border-radius:8px;">
         <h3 style="margin:0 0 8px; color:#2c3e9e;">🇯🇵 まず日本語訳で読む</h3>
         <ul style="margin:0; padding-left:20px; font-size:15px; color:#555;">
-          <li>②で「日本語に翻訳する」を押す</li>
-          <li>実行する前に、意味を予想してみよう</li>
+          <li>「日本語に翻訳する」を押す</li>
+          <li>右側に表示される訳で意味を確認しよう</li>
         </ul>
       </div>
       <div style="background:#e8f5e9; border-left:4px solid #27ae60; padding:16px; border-radius:8px;">
         <h3 style="margin:0 0 8px; color:#1a5c2a;">▶ 実行して確かめる</h3>
         <ul style="margin:0; padding-left:20px; font-size:15px; color:#555;">
-          <li>②で「実行する」を押す</li>
-          <li><code>print()</code>の内容は「出力」に出る</li>
+          <li>「実行する」を押す</li>
+          <li>右側の「出力」や「実行ログ」を見よう</li>
         </ul>
       </div>
       <div style="background:#fff3e0; border-left:4px solid #e67e22; padding:16px; border-radius:8px;">
@@ -131,16 +189,8 @@
   <div class="panel">
     <h2>② コードを読んで、実行して確かめよう</h2>
 
-    <div class="task-box">
-      <h3>📋 課題：まずは簡単なコードで試してみよう</h3>
-      <ul style="margin:0; padding-left:20px;">
-        <li>コードを読んで、何をするコードか予想しよう</li>
-        <li>「日本語に翻訳する」で確認しよう</li>
-        <li>「実行する」で、予想と実際の結果を見比べよう</li>
-      </ul>
-    </div>
-
     <div class="split-layout">
+      <!-- 左カラム：エディタ・操作ボタン・結果メッセージ -->
       <div class="split-left">
         <div class="status-line">
           <span class="status-dot" id="statusDot"></span>
@@ -154,75 +204,89 @@
         </div>
 
         <p style="margin:0 0 8px; font-weight:bold; color:#555;">📝 Pythonコード</p>
-        <textarea id="codeEditor" spellcheck="false">namae = 'たろう'
-print('こんにちは、' + namae + 'さん')</textarea>
+        
+        <!-- 行番号付きコードエディタコンテナ -->
+        <div class="editor-container">
+          <div class="line-numbers" id="lineNumbers"></div>
+          <textarea id="codeEditor" spellcheck="false">name = input('名前を入力: ')
+print(name + 'さん、こんにちは')</textarea>
+        </div>
 
-        <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+        <!-- 操作ボタン群 -->
+        <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
           <button id="translateBtn" disabled>🇯🇵 日本語に翻訳する</button>
           <button id="runBtn" disabled>▶ 実行する</button>
-        </div>
-        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-          <button id="skipBtn" class="ghost" style="display:none;">⏭ 最後まで飛ばす</button>
-        </div>
-      </div>
-
-      <div class="split-right">
-        <div class="info-box" style="margin-top:0;">
-          <strong>⚠️ 簡易版の翻訳です</strong>
-          <ul style="margin:6px 0 0; padding-left:20px;">
-            <li>対応：代入・if / elif / else・for / while・print</li>
-            <li>それ以外は元のコードのまま表示されます</li>
-          </ul>
+          <button id="skipBtn" class="ghost" style="display:none; background:#8e44ad; color:white;">⏭ 最後まで飛ばす</button>
         </div>
 
-        <p style="margin:16px 0 8px; font-weight:bold; color:#555;">📖 翻訳結果（左：コード／右：日本語訳）</p>
-        <div class="translate-grid" id="translateArea">
-          <div class="t-row"><div class="t-code">&nbsp;</div><div class="t-ja placeholder">「日本語に翻訳する」を押すと、左のコード入力欄の内容を翻訳します。</div></div>
-        </div>
-
-        <p style="margin:16px 0 8px; font-weight:bold; color:#555;">🖨️ 出力（print の結果）</p>
-        <div class="log-area" id="outputArea"><span class="placeholder">print() の出力がここに表示されます。</span></div>
-
-        <p style="margin:16px 0 8px; font-weight:bold; color:#555;">📶 実行ログ（1行ずつの処理）</p>
-        <p style="margin:0 0 8px; font-size:13.5px; color:#888;">「→」の後には、その行を実行した結果、新しく決まった・変わった値が表示されます。</p>
-        <div class="log-area" id="execLogArea"><span class="placeholder">「実行する」を押すと、1行ずつの実行の様子がここに表示されます。</span></div>
-
+        <!-- 結果ボックス -->
         <div class="result-box" id="resultBox"></div>
-
-        <p style="margin:16px 0 8px; font-weight:bold; color:#555;">🔢 変数の最終状態</p>
-        <table id="varsTable">
-          <thead><tr><th>変数名</th><th>値</th></tr></thead>
-          <tbody><tr><td colspan="2" style="color:#999;">まだ実行されていません</td></tr></tbody>
-        </table>
       </div>
-    </div>
 
-    <div class="try-box" style="margin-top:16px;">
-      <strong>試してみよう！</strong>
-      <ul style="margin:6px 0 0; padding-left:20px;">
-        <li><code>namae</code> を自分の名前に変えて実行してみよう</li>
-        <li>2行目のメッセージを書き換えてみよう</li>
-        <li>わざと文字を消してみて、どんなエラーが出るか見てみよう</li>
-      </ul>
+      <!-- 右カラム：タブ切替（日本語訳 ⇔ 実行結果） -->
+      <div class="split-right">
+        <div class="tab-header">
+          <button class="tab-btn active" id="tabTranslateBtn" onclick="switchTab('translate')">📖 日本語訳</button>
+          <button class="tab-btn" id="tabExecBtn" onclick="switchTab('exec')">🖨️ 実行結果・ログ</button>
+        </div>
+
+        <!-- タブ1: 日本語訳 -->
+        <div class="tab-content active" id="tabTranslateContent">
+          <div class="info-box">
+            <strong>⚠️ 簡易版の翻訳です</strong>（対応：代入／if・elif・else／for・while／print／input）
+          </div>
+          <div class="translate-grid" id="translateArea">
+            <div class="t-row"><div class="t-code">&nbsp;</div><div class="t-ja placeholder">「日本語に翻訳する」を押すと、ここに日本語訳が表示されます。</div></div>
+          </div>
+        </div>
+
+        <!-- タブ2: 実行結果・ログ -->
+        <div class="tab-content" id="tabExecContent">
+          <p style="margin:0 0 8px; font-weight:bold; color:#555;">📥 入力（input の結果）</p>
+          <div class="log-area small" id="inputArea"><span class="placeholder">input() の入力結果がここに表示されます。</span></div>
+
+          <p style="margin:16px 0 8px; font-weight:bold; color:#555;">🖨️ 出力（print の結果）</p>
+          <div class="log-area" id="outputArea"><span class="placeholder">print() の出力結果がここに表示されます。</span></div>
+
+          <p style="margin:16px 0 8px; font-weight:bold; color:#555;">📶 実行ログ（1行ずつの処理）</p>
+          <p style="margin:0 0 8px; font-size:13.5px; color:#888;">「→」の後には、その行を実行した結果、新しく決まった・変わった値が表示されます。</p>
+          <div class="log-area" id="execLogArea"><span class="placeholder">「実行する」を押すと、1行ずつの実行の様子がここに表示されます。</span></div>
+
+          <p style="margin:16px 0 8px; font-weight:bold; color:#555;">🔢 変数の最終状態</p>
+          <table id="varsTable">
+            <thead><tr><th>変数名</th><th>値</th></tr></thead>
+            <tbody><tr><td colspan="2" style="color:#999;">まだ実行されていません</td></tr></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
+function switchTab(tabName) {
+  const isTranslate = tabName === 'translate';
+  document.getElementById('tabTranslateBtn').classList.toggle('active', isTranslate);
+  document.getElementById('tabExecBtn').classList.toggle('active', !isTranslate);
+  document.getElementById('tabTranslateContent').classList.toggle('active', isTranslate);
+  document.getElementById('tabExecContent').classList.toggle('active', !isTranslate);
+}
+
 (function(){
   "use strict";
 
-  // ---- All DOM lookups first, so nothing is referenced before it is declared ----
   const statusDot = document.getElementById('statusDot');
   const statusText = document.getElementById('statusText');
   const statusBarWrap = document.getElementById('statusBarWrap');
   const statusBarLabel = document.getElementById('statusBarLabel');
   const statusBarFill = document.getElementById('statusBarFill');
   const codeEditor = document.getElementById('codeEditor');
+  const lineNumbers = document.getElementById('lineNumbers');
   const runBtn = document.getElementById('runBtn');
   const skipBtn = document.getElementById('skipBtn');
-  const execLogArea = document.getElementById('execLogArea');
+  const inputArea = document.getElementById('inputArea');
   const outputArea = document.getElementById('outputArea');
+  const execLogArea = document.getElementById('execLogArea');
   const resultBox = document.getElementById('resultBox');
   const varsTableBody = document.querySelector('#varsTable tbody');
   const translateBtn = document.getElementById('translateBtn');
@@ -230,6 +294,27 @@ print('こんにちは、' + namae + 'さん')</textarea>
 
   let pyodide = null;
   let session = 0;
+
+  // 行番号を更新する関数
+  function updateLineNumbers() {
+    const lines = codeEditor.value.split('\n').length;
+    let numsHtml = '';
+    for (let i = 1; i <= lines; i++) {
+      numsHtml += `<span>${i}</span>`;
+    }
+    lineNumbers.innerHTML = numsHtml;
+  }
+
+  // スクロールを連動させる処理
+  codeEditor.addEventListener('scroll', () => {
+    lineNumbers.scrollTop = codeEditor.scrollTop;
+  });
+
+  // テキスト入力・変更時に行番号を更新
+  codeEditor.addEventListener('input', updateLineNumbers);
+
+  // 初期表示で行番号を生成
+  updateLineNumbers();
 
   codeEditor.addEventListener('keydown', (e) => {
     if(e.key !== 'Tab') return;
@@ -240,13 +325,12 @@ print('こんにちは、' + namae + 'さん')</textarea>
     const end = codeEditor.selectionEnd;
 
     if(start === end && !e.shiftKey){
-      // no selection: just insert 4 spaces at the cursor
       codeEditor.value = value.slice(0, start) + '    ' + value.slice(end);
       codeEditor.selectionStart = codeEditor.selectionEnd = start + 4;
+      updateLineNumbers();
       return;
     }
 
-    // selection (or shift+tab with cursor only): indent/unindent whole lines
     const lineStart = value.lastIndexOf('\n', start - 1) + 1;
     let lineEnd = value.indexOf('\n', Math.max(end - 1, lineStart));
     if(lineEnd === -1) lineEnd = value.length;
@@ -265,27 +349,43 @@ print('こんにちは、' + namae + 'さん')</textarea>
     codeEditor.value = before + newSegment + after;
     codeEditor.selectionStart = lineStart;
     codeEditor.selectionEnd = lineStart + newSegment.length;
+    updateLineNumbers();
   });
 
-  // Python-side wrapper: runs the student's code under sys.settrace so we can
-  // collect a line-by-line trace (line number, local variables, any output
-  // produced by that line) without needing to guess/parse anything on the JS side.
   const WRAPPER_SCRIPT = `
-import sys, json as _json, io
+import sys, json as _json, io, builtins, js
 
 _trace_log = []
 _step_count = [0]
 _out_buffer = io.StringIO()
+_in_buffer = io.StringIO()
 _old_stdout = sys.stdout
 _error_message = None
 
+def _custom_input(prompt_msg=""):
+    prompt_str = str(prompt_msg)
+    res = js.prompt(prompt_str)
+    if res is None:
+        res = ""
+    input_text = f"{prompt_str}{res}\\n"
+    _in_buffer.write(input_text)
+    return res
+
+builtins.input = _custom_input
+
 def _flush_output_to_last():
     if _trace_log:
-        chunk = _out_buffer.getvalue()
-        if chunk:
-            _trace_log[-1]['output'] += chunk
+        out_chunk = _out_buffer.getvalue()
+        if out_chunk:
+            _trace_log[-1]['output'] += out_chunk
             _out_buffer.seek(0)
             _out_buffer.truncate(0)
+        
+        in_chunk = _in_buffer.getvalue()
+        if in_chunk:
+            _trace_log[-1]['input'] += in_chunk
+            _in_buffer.seek(0)
+            _in_buffer.truncate(0)
 
 _STUDENT_FILENAME = '<あなたのコード>'
 def _tracer(frame, event, arg):
@@ -305,7 +405,7 @@ def _tracer(frame, event, arg):
                 locs[_k] = _v
             except Exception:
                 pass
-        _trace_log.append({'line': frame.f_lineno, 'vars': locs, 'output': ''})
+        _trace_log.append({'line': frame.f_lineno, 'vars': locs, 'output': '', 'input': ''})
     return _tracer
 
 sys.stdout = _out_buffer
@@ -344,9 +444,6 @@ for _k, _v in _user_ns.items():
 _json.dumps({'trace': _trace_log, 'error': _error_message, 'final_vars': _final_vars}, ensure_ascii=False)
 `;
 
-  // Simplified AST-based Python -> Japanese paraphraser.
-  // Only covers assignment / if-elif-else / for / while / print, per the
-  // disclaimer shown in the UI. Anything else falls back to the raw source.
   const TRANSLATE_SCRIPT = `
 import ast, json as _json
 
@@ -402,6 +499,10 @@ def _expr_ja_impl(node):
     if isinstance(node, ast.Call):
         fname = getattr(node.func, 'id', None)
         args = [_expr_ja(a) for a in node.args]
+        if fname == 'input':
+            if args:
+                return f'{args[0]} と表示してキーボードから入力された値'
+            return 'キーボードから入力された値'
         if fname == 'len':
             return f'{args[0]} の長さ'
         if fname in ('int', 'str', 'float'):
@@ -422,9 +523,6 @@ def _expr_ja_impl(node):
     return _fallback(node)
 
 def _find_else_lineno(stmt_lineno):
-    # 'else:' has no AST node of its own, so its line number isn't recorded.
-    # Search upward from the first statement inside the else-block for the
-    # actual 'else:' line in the source.
     for i in range(stmt_lineno - 2, max(-1, stmt_lineno - 8), -1):
         if i < 0:
             break
@@ -452,7 +550,7 @@ def _stmt_ja_impl(node, depth):
     if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
         return [(node.lineno, depth, f'変数「{node.targets[0].id}」に {_expr_ja(node.value)} を代入する')]
     if isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
-        opmap = {ast.Add: '足す', ast.Sub: '引く', ast.Mult: '掛ける', ast.Div: '割る'}
+        opmap = {ast.Add: '足す', ast.Sub: '引く', ast.Mult: '掛け', ast.Div: '割る'}
         opname = opmap.get(type(node.op))
         if opname:
             return [(node.lineno, depth, f'変数「{node.target.id}」に {_expr_ja(node.value)} を{opname}')]
@@ -524,7 +622,6 @@ except Exception as _e:
 _json.dumps({'lines': _t_result, 'error': _t_error}, ensure_ascii=False)
 `;
 
-
   function appendTo(area, text){
     if(area.querySelector('.placeholder')) area.innerHTML = '';
     const line = document.createElement('div');
@@ -547,13 +644,12 @@ _json.dumps({'lines': _t_result, 'error': _t_error}, ensure_ascii=False)
   async function init(){
     try{
       pyodide = await loadPyodide();
-      // loading complete
       statusBarFill.classList.add('done');
       statusBarLabel.textContent = '✅ Pythonの準備が完了しました！';
       setTimeout(() => { statusBarWrap.style.display = 'none'; }, 1400);
 
       statusDot.classList.add('ready');
-      statusText.textContent = 'Python の準備ができました。「実行する」を押してください。';
+      statusText.textContent = 'Python の準備ができました。';
       runBtn.disabled = false;
       translateBtn.disabled = false;
     } catch(err){
@@ -569,7 +665,6 @@ _json.dumps({'lines': _t_result, 'error': _t_error}, ensure_ascii=False)
     }
   }
 
-  // Python-style repr of a value (strings in single quotes, True/False/None)
   function pyRepr(v){
     if(v === null || v === undefined) return 'None';
     if(typeof v === 'boolean') return v ? 'True' : 'False';
@@ -611,12 +706,14 @@ _json.dumps({'lines': _t_result, 'error': _t_error}, ensure_ascii=False)
 
   runBtn.addEventListener('click', async () => {
     if(!pyodide) return;
+    switchTab('exec');
     session++;
     const mySession = session;
 
     runBtn.disabled = true;
     skipBtn.style.display = 'none';
     clearArea(execLogArea, '');
+    clearArea(inputArea, '');
     clearArea(outputArea, '');
     resultBox.style.display = 'none';
     resultBox.classList.remove('error');
@@ -642,20 +739,19 @@ _json.dumps({'lines': _t_result, 'error': _t_error}, ensure_ascii=False)
 
     const trace = data.trace || [];
     execLogArea.innerHTML = '';
+    inputArea.innerHTML = '';
     outputArea.innerHTML = '';
 
     if(trace.length === 0 && !data.error){
       clearArea(execLogArea, '実行できる行がありませんでした。');
     }
 
-    // pace the animation so long traces don't take forever
     const delay = trace.length > 0 ? Math.max(40, Math.min(450, 6000 / trace.length)) : 450;
     let skip = false;
     skipBtn.style.display = trace.length > 3 ? 'inline-block' : 'none';
     skipBtn.onclick = () => { skip = true; };
 
     function afterVarsFor(i){
-      // the state that results from executing trace[i]'s line
       return (i + 1 < trace.length) ? trace[i + 1].vars : (data.final_vars || trace[i].vars);
     }
 
@@ -665,6 +761,9 @@ _json.dumps({'lines': _t_result, 'error': _t_error}, ensure_ascii=False)
       let msg = `▶ ${rec.line}行目: ${srcLine}`;
       if(changed.length) msg += `  → ${changed.join(', ')}`;
       appendTo(execLogArea, msg);
+      if(rec.input){
+        rec.input.split('\n').filter((l, idx, arr) => !(idx === arr.length - 1 && l === '')).forEach(l => appendTo(inputArea, l));
+      }
       if(rec.output){
         rec.output.split('\n').filter((l, idx, arr) => !(idx === arr.length - 1 && l === '')).forEach(l => appendTo(outputArea, l));
       }
@@ -693,11 +792,12 @@ _json.dumps({'lines': _t_result, 'error': _t_error}, ensure_ascii=False)
       runBtn.disabled = false;
       renderVarsTable(data.final_vars || (trace.length ? trace[trace.length - 1].vars : null));
       if(execLogArea.children.length === 0) clearArea(execLogArea, '実行できる行がありませんでした。');
+      if(inputArea.children.length === 0) clearArea(inputArea, 'なし');
       if(outputArea.children.length === 0) clearArea(outputArea, '（出力はありませんでした）');
       if(data.error){
         showResult('❌ エラーが発生しました\n' + data.error, true);
       } else {
-        showResult('✅ 実行が完了しました(実行ログ・出力・下の変数の最終状態を確認しよう)', false);
+        showResult('✅ 実行が完了しました(実行ログ・入力・出力・下の変数の最終状態を確認しよう)', false);
       }
     }
 
@@ -713,7 +813,6 @@ _json.dumps({'lines': _t_result, 'error': _t_error}, ensure_ascii=False)
   }
 
   function renderTranslateGrid(codeLines, translated){
-    // group translated entries by source line number
     const byLine = {};
     translated.forEach(([lineNo, depth, text]) => {
       (byLine[lineNo] = byLine[lineNo] || []).push({ depth, text });
@@ -744,6 +843,7 @@ _json.dumps({'lines': _t_result, 'error': _t_error}, ensure_ascii=False)
 
   translateBtn.addEventListener('click', async () => {
     if(!pyodide) return;
+    switchTab('translate');
     translateBtn.disabled = true;
     translateArea.innerHTML = '<div class="t-row"><div class="t-code">&nbsp;</div><div class="t-ja placeholder">翻訳中…</div></div>';
 
